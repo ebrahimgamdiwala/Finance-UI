@@ -112,6 +112,15 @@
   --sidebar-ring: oklch(0.556 0 0);
 }
 
+/* Custom Font */
+@font-face {
+  font-family: 'Ivy Presto';
+  src: url('/fonts/Ivy-Presto-Text-Light.otf') format('opentype');
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;
@@ -119,4 +128,101 @@
   body {
     @apply bg-background text-foreground;
   }
+  
+  /* Apply Ivy Presto font to headings and main text */
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Ivy Presto', var(--font-geist-sans), sans-serif;
+  }
+  
+  p, span, div, button, input, textarea, select, label {
+    font-family: 'Ivy Presto', var(--font-geist-sans), sans-serif;
+  }
 }
+
+/* Utility class for Ivy font */
+.ivy-font {
+  font-family: 'Ivy Presto', var(--font-geist-sans), sans-serif;
+}
+
+/* Exclude StaggeredMenu items from custom font */
+.sm-panel-item,
+.sm-panel-itemLabel,
+.sm-socials-title,
+.sm-socials-link {
+  font-family: var(--font-geist-sans), sans-serif !important;
+}
+
+/* Assistant page animations */
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes message-slide {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.6s ease-out forwards;
+}
+
+.animate-slide-up {
+  animation: slide-up 0.8s ease-out forwards;
+}
+
+.animate-message-slide {
+  animation: message-slide 0.4s ease-out forwards;
+}
+
+/* Floating capsule animations */
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-15px);
+  }
+}
+
+@keyframes float-delayed {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-15px);
+  }
+}
+
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+}
+
+.animate-float-delayed {
+  animation: float-delayed 3.5s ease-in-out infinite;
+  animation-delay: 0.5s;
+}
+

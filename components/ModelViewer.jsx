@@ -32,7 +32,21 @@ const Loader = ({ placeholderSrc }) => {
 
 const DesktopControls = ({ pivot, min, max, zoomEnabled }) => {
   const ref = useRef(null);
-  useFrame(() => ref.current?.target.copy(pivot));
+  const { camera } = useThree();
+  
+  useLayoutEffect(() => {
+    // Reset camera and controls on mount
+    if (ref.current) {
+      ref.current.reset();
+    }
+  }, []);
+  
+  useFrame(() => {
+    if (ref.current) {
+      ref.current.target.copy(pivot);
+    }
+  });
+  
   return (
     <OrbitControls
       ref={ref}
@@ -85,6 +99,8 @@ const ModelInner = ({
   }, [url, ext]);
 
   const pivotW = useRef(new THREE.Vector3());
+  const initialCameraSet = useRef(false);
+  
   useLayoutEffect(() => {
     if (!content) return;
     const g = inner.current;
@@ -110,7 +126,7 @@ const ModelInner = ({
     pivot.copy(pivotW.current);
     outer.current.rotation.set(initPitch, initYaw, 0);
 
-    if (autoFrame && camera.isPerspectiveCamera) {
+    if (autoFrame && camera.isPerspectiveCamera && !initialCameraSet.current) {
       const persp = camera;
       const fitR = sphere.radius * s;
       const d = (fitR * 1.2) / Math.sin((persp.fov * Math.PI) / 180 / 2);
@@ -118,6 +134,7 @@ const ModelInner = ({
       persp.near = d / 10;
       persp.far = d * 10;
       persp.updateProjectionMatrix();
+      initialCameraSet.current = true;
     }
 
     if (fadeIn) {

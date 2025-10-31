@@ -1,5 +1,6 @@
 import React, { useCallback, useLayoutEffect, useRef, useState } from 'react';
 import { gsap } from 'gsap';
+import Link from 'next/link';
 import ThemeToggle from '@/components/ThemeToggle';
 
 export const StaggeredMenu = ({
@@ -76,6 +77,33 @@ export const StaggeredMenu = ({
     });
     return () => ctx.revert();
   }, [menuButtonColor, position]);
+
+  // Close menu when clicking outside
+  useLayoutEffect(() => {
+    if (!open) return;
+
+    const handleClickOutside = (event) => {
+      const panel = panelRef.current;
+      const toggleBtn = toggleBtnRef.current;
+      
+      // Check if click is outside both the panel and toggle button
+      if (panel && toggleBtn && 
+          !panel.contains(event.target) && 
+          !toggleBtn.contains(event.target)) {
+        toggleMenu();
+      }
+    };
+
+    // Add listener with a small delay to prevent immediate closure
+    const timeoutId = setTimeout(() => {
+      document.addEventListener('mousedown', handleClickOutside);
+    }, 100);
+
+    return () => {
+      clearTimeout(timeoutId);
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [open]);
 
   const buildOpenTimeline = useCallback(() => {
     const panel = panelRef.current;
@@ -318,7 +346,7 @@ export const StaggeredMenu = ({
 
   return (
     <div
-      className={`sm-scope z-40 ${isFixed ? 'fixed top-0 left-0 w-screen h-screen overflow-hidden' : 'w-full h-full'}`}>
+      className={`sm-scope z-40 ${isFixed ? 'fixed top-0 left-0 w-screen h-screen overflow-hidden pointer-events-none' : 'w-full h-full'}`}>
       {/* Full-page backdrop blur overlay, shown only when menu is open */}
       <div
         className="sm-page-blur-overlay fixed inset-0 pointer-events-none"
@@ -415,7 +443,7 @@ export const StaggeredMenu = ({
         <aside
           id="staggered-menu-panel"
           ref={panelRef}
-          className="staggered-menu-panel absolute top-0 right-0 h-full bg-white flex flex-col p-[6em_2em_2em_2em] overflow-y-auto z-40 backdrop-blur-md"
+          className="staggered-menu-panel absolute top-0 right-0 h-full bg-white flex flex-col p-[6em_2em_2em_2em] overflow-y-auto z-40 backdrop-blur-md pointer-events-auto"
           style={{ WebkitBackdropFilter: 'blur(12px)' }}
           aria-hidden={!open}>
           <div className="sm-panel-inner flex-1 flex flex-col gap-5">
@@ -424,22 +452,33 @@ export const StaggeredMenu = ({
               role="list"
               data-numbering={displayItemNumbering || undefined}>
               {items && items.length ? (
-                items.map((it, idx) => (
-                  <li
-                    className="sm-panel-itemWrap relative overflow-hidden leading-none"
-                    key={it.label + idx}>
-                    <a
-                      className="sm-panel-item relative text-black font-semibold text-[4rem] cursor-pointer leading-none tracking-[-2px] uppercase transition-[background,color] duration-150 ease-linear inline-block no-underline pr-[1.4em]"
-                      href={it.link}
-                      aria-label={it.ariaLabel}
-                      data-index={idx + 1}>
-                      <span
-                        className="sm-panel-itemLabel inline-block origin-[50%_100%] will-change-transform">
-                        {it.label}
-                      </span>
-                    </a>
-                  </li>
-                ))
+                items.map((it, idx) => {
+                  const isInternalRoute = it.link && (it.link.startsWith('/') && !it.link.startsWith('/#'));
+                  const LinkComponent = isInternalRoute ? Link : 'a';
+                  
+                  return (
+                    <li
+                      className="sm-panel-itemWrap relative overflow-hidden leading-none"
+                      key={it.label + idx}>
+                      <LinkComponent
+                        className="sm-panel-item relative text-black font-semibold text-[4rem] cursor-pointer leading-none tracking-[-2px] uppercase transition-[background,color] duration-150 ease-linear inline-block no-underline pr-[1.4em]"
+                        href={it.link}
+                        aria-label={it.ariaLabel}
+                        data-index={idx + 1}
+                        onClick={() => {
+                          // Close menu when clicking any menu item
+                          if (open) {
+                            toggleMenu();
+                          }
+                        }}>
+                        <span
+                          className="sm-panel-itemLabel inline-block origin-[50%_100%] will-change-transform">
+                          {it.label}
+                        </span>
+                      </LinkComponent>
+                    </li>
+                  );
+                })
               ) : (
                 <li
                   className="sm-panel-itemWrap relative overflow-hidden leading-none"
@@ -516,13 +555,13 @@ export const StaggeredMenu = ({
 .sm-scope .sm-socials-link:hover { color: var(--sm-accent, #ff0000); }
 .sm-scope .sm-panel-title { margin: 0; font-size: 1rem; font-weight: 600; color: #fff; text-transform: uppercase; }
 .sm-scope .sm-panel-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.5rem; }
-.sm-scope .sm-panel-item { position: relative; color: #000; font-weight: 600; font-size: 4rem; cursor: pointer; line-height: 1; letter-spacing: -2px; text-transform: uppercase; transition: background 0.25s, color 0.25s; display: inline-block; text-decoration: none; padding-right: 1.4em; }
+.sm-scope .sm-panel-item { position: relative; color: #000; font-weight: 600; font-size: 3rem; cursor: pointer; line-height: 1; letter-spacing: -2px; text-transform: uppercase; transition: background 0.25s, color 0.25s; display: inline-block; text-decoration: none; padding-right: 1.4em; }
 .sm-scope .sm-panel-itemLabel { display: inline-block; will-change: transform; transform-origin: 50% 100%; }
 .sm-scope .sm-panel-item:hover { color: var(--sm-accent, #ff0000); }
 .sm-scope .sm-panel-list[data-numbering] { counter-reset: smItem; }
 .sm-scope .sm-panel-list[data-numbering] .sm-panel-item::after { counter-increment: smItem; content: counter(smItem, decimal-leading-zero); position: absolute; top: 0.1em; right: 0.3em; font-size: 18px; font-weight: 400; color: var(--sm-accent, #ff0000); letter-spacing: 0; pointer-events: none; user-select: none; opacity: var(--sm-num-opacity, 0); }
-@media (max-width: 1024px) { .sm-scope .staggered-menu-panel { width: 100%; left: 0; right: 0; padding: 4em 2em 2em 2em; } .sm-scope .prelayers { width: 100%; } .sm-scope .staggered-menu-wrapper[data-open] .sm-logo-img { filter: invert(100%); } .sm-scope .sm-panel-item { font-size: 3rem; padding-right: 1em; } .sm-scope .sm-panel-list[data-numbering] .sm-panel-item::after { font-size: 14px; right: 0.15em; } }
-@media (max-width: 640px) { .sm-scope .staggered-menu-panel { width: 100%; left: 0; right: 0; padding: 4em 1.5em 2em 1.5em; } .sm-scope .prelayers { width: 100%; } .sm-scope .staggered-menu-wrapper[data-open] .sm-logo-img { filter: invert(100%); } .sm-scope .sm-panel-item { font-size: 2.5rem; padding-right: 0.8em; letter-spacing: -1px; } .sm-scope .sm-panel-list[data-numbering] .sm-panel-item::after { font-size: 12px; right: 0.1em; top: 0.2em; } .sm-scope .staggered-menu-header { padding: 1.5em; } .sm-scope .sm-socials-link { font-size: 1rem; } }
+@media (max-width: 1024px) { .sm-scope .staggered-menu-panel { width: 100%; left: 0; right: 0; padding: 4em 2em 2em 2em; } .sm-scope .prelayers { width: 100%; } .sm-scope .staggered-menu-wrapper[data-open] .sm-logo-img { filter: invert(100%); } .sm-scope .sm-panel-item { font-size: 2.5rem; padding-right: 1em; } .sm-scope .sm-panel-list[data-numbering] .sm-panel-item::after { font-size: 14px; right: 0.15em; } }
+@media (max-width: 640px) { .sm-scope .staggered-menu-panel { width: 100%; left: 0; right: 0; padding: 4em 1.5em 2em 1.5em; } .sm-scope .prelayers { width: 100%; } .sm-scope .staggered-menu-wrapper[data-open] .sm-logo-img { filter: invert(100%); } .sm-scope .sm-panel-item { font-size: 2rem; padding-right: 0.8em; letter-spacing: -1px; } .sm-scope .sm-panel-list[data-numbering] .sm-panel-item::after { font-size: 12px; right: 0.1em; top: 0.2em; } .sm-scope .staggered-menu-header { padding: 1.5em; } .sm-scope .sm-socials-link { font-size: 1rem; } }
       `}</style>
     </div>
   );
