@@ -329,6 +329,15 @@ export const StaggeredMenu = ({
   const toggleMenu = useCallback(() => {
     const target = !openRef.current;
     openRef.current = target;
+    // If we're closing the menu, move focus back to the toggle button
+    // before hiding the panel to avoid aria-hidden blocking a focused descendant.
+    if (!target) {
+      try {
+        toggleBtnRef.current?.focus?.();
+      } catch (e) {
+        // ignore focus errors
+      }
+    }
     setOpen(target);
 
     if (target) {
