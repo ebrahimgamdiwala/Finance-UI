@@ -45,10 +45,6 @@ jobs:
       - name: Run tests
         run: npm test
 
-      - name: Run tests with coverage
-        run: npm run test:coverage
-        continue-on-error: true
-
   build:
     name: Build Docker Image
     needs: test

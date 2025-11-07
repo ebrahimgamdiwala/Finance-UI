@@ -9,7 +9,8 @@ export default function ThemeToggle({ className = "" }) {
   const [theme, setTheme] = useState("light");
 
   useEffect(() => {
-    setMounted(true);
+    // Delay mounting to avoid hydration mismatch
+    const timer = setTimeout(() => setMounted(true), 0);
     const saved = localStorage.getItem(STORAGE_KEY);
     let initial = saved;
     if (!initial) {
@@ -17,6 +18,7 @@ export default function ThemeToggle({ className = "" }) {
     }
     setTheme(initial);
     document.documentElement.classList.toggle("dark", initial === "dark");
+    return () => clearTimeout(timer);
   }, []);
 
   const toggle = () => {

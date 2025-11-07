@@ -90,7 +90,9 @@ export const StaggeredMenu = ({
       if (panel && toggleBtn && 
           !panel.contains(event.target) && 
           !toggleBtn.contains(event.target)) {
-        toggleMenu();
+        // Close menu by setting openRef and state directly
+        openRef.current = false;
+        setOpen(false);
       }
     };
 

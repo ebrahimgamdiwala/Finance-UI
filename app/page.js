@@ -17,7 +17,7 @@ export default function Home() {
   const modelUrl = "/models/data_chart_graphic_table_infographic.glb";
   const [menuBtnColor, setMenuBtnColor] = useState('#000000');
   const [isDarkMode, setIsDarkMode] = useState(false);
-  const [modelKey, setModelKey] = useState(Date.now());
+  const [modelKey, setModelKey] = useState(0);
   const pathname = usePathname();
 
   useEffect(() => {

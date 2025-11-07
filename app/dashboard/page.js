@@ -18,6 +18,34 @@ import {
   PiggyBank, TrendingDown
 } from "lucide-react";
 
+// StatCard Component
+const StatCard = ({ title, value, change, icon: Icon, trend }) => (
+  <Card className="overflow-hidden border-border/40 backdrop-blur-sm bg-card/50 hover:bg-card/70 transition-all duration-300 hover:scale-105 hover:shadow-lg group cursor-pointer">
+    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+      <CardTitle className="text-sm font-medium text-muted-foreground ivy-font group-hover:text-foreground transition-colors">
+        {title}
+      </CardTitle>
+      <div className="p-2 rounded-lg bg-emerald-500/10 group-hover:bg-emerald-500 transition-colors">
+        <Icon className="h-4 w-4 text-emerald-500 group-hover:text-white transition-colors" />
+      </div>
+    </CardHeader>
+    <CardContent>
+      <div className="text-2xl font-bold text-foreground ivy-font">{value}</div>
+      <div className="flex items-center gap-1 text-xs text-muted-foreground mt-1">
+        {trend === "up" ? (
+          <ArrowUpRight className="h-3 w-3 text-emerald-500" />
+        ) : (
+          <ArrowDownRight className="h-3 w-3 text-red-500" />
+        )}
+        <span className={trend === "up" ? "text-emerald-500" : "text-red-500"}>
+          {change}
+        </span>
+        <span>from last month</span>
+      </div>
+    </CardContent>
+  </Card>
+);
+
 // Dummy Data
 const revenueData = [
   { month: "Jan", revenue: 45000, expenses: 28000, profit: 17000 },
@@ -134,33 +162,6 @@ export default function Dashboard() {
     chartColors.tertiary,
     chartColors.quaternary,
   ];
-
-  const StatCard = ({ title, value, change, icon: Icon, trend }) => (
-    <Card className="overflow-hidden border-border/40 backdrop-blur-sm bg-card/50 hover:bg-card/70 transition-all duration-300 hover:scale-105 hover:shadow-lg group cursor-pointer">
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-sm font-medium text-muted-foreground ivy-font group-hover:text-foreground transition-colors">
-          {title}
-        </CardTitle>
-        <div className="p-2 rounded-lg bg-emerald-500/10 group-hover:bg-emerald-500 transition-colors">
-          <Icon className="h-4 w-4 text-emerald-500 group-hover:text-white transition-colors" />
-        </div>
-      </CardHeader>
-      <CardContent>
-        <div className="text-2xl font-bold text-foreground ivy-font">{value}</div>
-        <div className="flex items-center gap-1 text-xs text-muted-foreground mt-1">
-          {trend === "up" ? (
-            <ArrowUpRight className="h-3 w-3 text-emerald-500" />
-          ) : (
-            <ArrowDownRight className="h-3 w-3 text-red-500" />
-          )}
-          <span className={trend === "up" ? "text-emerald-500" : "text-red-500"}>
-            {change}
-          </span>
-          <span>from last month</span>
-        </div>
-      </CardContent>
-    </Card>
-  );
 
   return (
     <div className="min-h-screen w-full">
