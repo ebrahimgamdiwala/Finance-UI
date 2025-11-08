@@ -399,6 +399,7 @@ export default function ProjectDetailPage() {
             onTaskUpdate={handleTaskUpdate}
             canManageTasks={canManageProject}
             userId={session?.user?.id}
+            userRole={session?.user?.role}
           />
         </TabsContent>
 

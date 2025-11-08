@@ -116,6 +116,7 @@ export async function PATCH(req, context) {
     );
   }
   
+  const { user } = authResult;
   const params = await context.params;
   const { id } = params;
   
@@ -135,19 +136,77 @@ export async function PATCH(req, context) {
       images,
     } = body;
     
+    // Get the task to check permissions
+    const existingTask = await prisma.task.findUnique({
+      where: { id },
+      select: {
+        assigneeId: true,
+        projectId: true,
+        project: {
+          select: {
+            managerId: true,
+          },
+        },
+      },
+    });
+    
+    if (!existingTask) {
+      return NextResponse.json(
+        { error: 'Task not found' },
+        { status: 404 }
+      );
+    }
+    
+    // Check if user has permission to update this task
+    const isAdmin = user.role === 'ADMIN';
+    const isProjectManager = user.role === 'PROJECT_MANAGER' && existingTask.project.managerId === user.id;
+    const isTaskAssignee = existingTask.assigneeId === user.id;
+    const isTeamMember = user.role === 'TEAM_MEMBER';
+    
+    // Team members can only update tasks assigned to them
+    if (isTeamMember && !isTaskAssignee) {
+      return NextResponse.json(
+        { error: 'You can only update tasks assigned to you' },
+        { status: 403 }
+      );
+    }
+    
     // Prepare update data
     const updateData = {};
-    if (title !== undefined) updateData.title = title;
-    if (description !== undefined) updateData.description = description;
-    if (assigneeId !== undefined) updateData.assigneeId = assigneeId;
-    if (status !== undefined) updateData.status = status;
-    if (priority !== undefined) updateData.priority = priority;
-    if (deadline !== undefined) updateData.deadline = deadline ? new Date(deadline) : null;
-    if (estimateHours !== undefined) updateData.estimateHours = estimateHours ? parseFloat(estimateHours) : null;
-    if (loggedHours !== undefined) updateData.loggedHours = parseFloat(loggedHours);
-    if (orderIndex !== undefined) updateData.orderIndex = parseInt(orderIndex);
-    if (coverUrl !== undefined) updateData.coverUrl = coverUrl;
-    if (images !== undefined) updateData.images = images;
+    
+    // Team members can ONLY update status and loggedHours, nothing else
+    if (isTeamMember) {
+      if (status !== undefined) updateData.status = status;
+      if (loggedHours !== undefined) updateData.loggedHours = parseFloat(loggedHours);
+      
+      // Reject if trying to update critical fields
+      if (title !== undefined || description !== undefined || assigneeId !== undefined || 
+          priority !== undefined || deadline !== undefined || estimateHours !== undefined ||
+          coverUrl !== undefined || images !== undefined) {
+        return NextResponse.json(
+          { error: 'Team members can only update task status and logged hours' },
+          { status: 403 }
+        );
+      }
+    } else if (isAdmin || isProjectManager) {
+      // Admins and project managers can update all fields
+      if (title !== undefined) updateData.title = title;
+      if (description !== undefined) updateData.description = description;
+      if (assigneeId !== undefined) updateData.assigneeId = assigneeId;
+      if (status !== undefined) updateData.status = status;
+      if (priority !== undefined) updateData.priority = priority;
+      if (deadline !== undefined) updateData.deadline = deadline ? new Date(deadline) : null;
+      if (estimateHours !== undefined) updateData.estimateHours = estimateHours ? parseFloat(estimateHours) : null;
+      if (loggedHours !== undefined) updateData.loggedHours = parseFloat(loggedHours);
+      if (orderIndex !== undefined) updateData.orderIndex = parseInt(orderIndex);
+      if (coverUrl !== undefined) updateData.coverUrl = coverUrl;
+      if (images !== undefined) updateData.images = images;
+    } else {
+      return NextResponse.json(
+        { error: 'Insufficient permissions to update this task' },
+        { status: 403 }
+      );
+    }
     
     const task = await prisma.task.update({
       where: { id },

@@ -357,6 +357,7 @@ export default function EditTaskDialog({ isOpen, onClose, task, onTaskUpdated, c
                 onChange={handleChange}
                 placeholder="Enter task description"
                 rows={3}
+                disabled={isTeamMember}
                 className={fieldErrors.description ? 'border-red-500' : ''}
               />
               {fieldErrors.description && (
@@ -487,37 +488,40 @@ export default function EditTaskDialog({ isOpen, onClose, task, onTaskUpdated, c
               </div>
             </div>
 
-            <div className="grid gap-4 md:grid-cols-2">
-              <div className="space-y-2">
-                <Label htmlFor="coverUrl">Cover Image URL</Label>
-                <Input
-                  id="coverUrl"
-                  name="coverUrl"
-                  value={formData.coverUrl}
-                  onChange={handleChange}
-                  placeholder="https://..."
-                  className={fieldErrors.coverUrl ? 'border-red-500' : ''}
-                />
-                {fieldErrors.coverUrl && (
-                  <p className="text-xs text-red-600 dark:text-red-400">{fieldErrors.coverUrl}</p>
-                )}
-              </div>
+            {!isTeamMember && (
+              <div className="grid gap-4 md:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="coverUrl">Cover Image URL</Label>
+                  <Input
+                    id="coverUrl"
+                    name="coverUrl"
+                    value={formData.coverUrl}
+                    onChange={handleChange}
+                    placeholder="https://..."
+                    className={fieldErrors.coverUrl ? 'border-red-500' : ''}
+                  />
+                  {fieldErrors.coverUrl && (
+                    <p className="text-xs text-red-600 dark:text-red-400">{fieldErrors.coverUrl}</p>
+                  )}
+                </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="coverFile">Upload Cover Image</Label>
-                <Input
-                  id="coverFile"
-                  type="file"
-                  accept="image/*"
-                  onChange={handleCoverUpload}
-                  className="text-sm"
-                />
+                <div className="space-y-2">
+                  <Label htmlFor="coverFile">Upload Cover Image</Label>
+                  <Input
+                    id="coverFile"
+                    type="file"
+                    accept="image/*"
+                    onChange={handleCoverUpload}
+                    className="text-sm"
+                  />
+                </div>
               </div>
-            </div>
+            )}
 
             {/* Multiple Images Upload */}
-            <div className="space-y-2">
-              <Label htmlFor="multipleImages">Task Images (Multiple)</Label>
+            {!isTeamMember && (
+              <div className="space-y-2">
+                <Label htmlFor="multipleImages">Task Images (Multiple)</Label>
               <div className="flex flex-col gap-3">
                 <label
                   htmlFor="multipleImages"
@@ -563,7 +567,8 @@ export default function EditTaskDialog({ isOpen, onClose, task, onTaskUpdated, c
                   {imagePreviews.length} image(s) - Images will be shown in a carousel
                 </p>
               </div>
-            </div>
+              </div>
+            )}
           </div>
 
           <DialogFooter>

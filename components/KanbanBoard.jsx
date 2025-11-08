@@ -351,7 +351,7 @@ function KanbanColumn({ column, tasks, activeId, onEdit, onDelete, onChangeCover
 }
 
 // Main Kanban Board Component
-export default function KanbanBoard({ tasks: initialTasks, onTaskUpdate, canManageTasks = true, userId }) {
+export default function KanbanBoard({ tasks: initialTasks, onTaskUpdate, canManageTasks = true, userId, userRole }) {
   const [tasks, setTasks] = useState(initialTasks || []);
   const [activeId, setActiveId] = useState(null);
   const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
@@ -596,6 +596,7 @@ export default function KanbanBoard({ tasks: initialTasks, onTaskUpdate, canMana
         onTaskUpdated={handleTaskUpdated}
         canManageTasks={canManageTasks}
         userId={userId}
+        userRole={userRole}
       />
     </DndContext>
   );
