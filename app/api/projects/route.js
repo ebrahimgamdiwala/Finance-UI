@@ -38,13 +38,24 @@ export async function GET(req) {
         },
       ];
     } else if (user.role === 'TEAM_MEMBER') {
-      // Team members see projects they're assigned to
-      whereClause.members = {
-        some: {
-          userId: user.id,
-          isActive: true,
+      // Team members see projects they're members of OR have tasks assigned in
+      whereClause.OR = [
+        {
+          members: {
+            some: {
+              userId: user.id,
+              isActive: true,
+            },
+          },
         },
-      };
+        {
+          tasks: {
+            some: {
+              assigneeId: user.id,
+            },
+          },
+        },
+      ];
     }
     // ADMIN, SALES, FINANCE see all projects
     

@@ -23,6 +23,7 @@ import {
   BarChart3,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { getUserCapabilities } from "@/lib/rbac-client";
 
 // Status configuration
 const STATUS_CONFIG = {
@@ -348,20 +349,38 @@ export default function ProjectsPage() {
     );
   }
 
+  const userRole = session?.user?.role;
+  const capabilities = getUserCapabilities(session?.user);
+  
+  // Get appropriate page title based on role
+  const getPageTitle = () => {
+    if (userRole === "TEAM_MEMBER") return "My Projects";
+    if (userRole === "PROJECT_MANAGER") return "My Projects";
+    return "Projects";
+  };
+
+  const getPageDescription = () => {
+    if (userRole === "TEAM_MEMBER") return "Projects you're working on";
+    if (userRole === "PROJECT_MANAGER") return "Manage and track your projects";
+    return "Manage and track all projects";
+  };
+
   return (
     <div className="container mx-auto p-6 space-y-6">
       {/* Header */}
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Projects</h1>
+          <h1 className="text-3xl font-bold">{getPageTitle()}</h1>
           <p className="text-muted-foreground mt-1">
-            Manage and track all your projects
+            {getPageDescription()}
           </p>
         </div>
-        <Button onClick={handleCreateProject} className="gap-2">
-          <Plus className="h-4 w-4" />
-          New Project
-        </Button>
+        {capabilities.canCreateProjects && (
+          <Button onClick={handleCreateProject} className="gap-2">
+            <Plus className="h-4 w-4" />
+            New Project
+          </Button>
+        )}
       </div>
 
       {/* KPI Cards */}
@@ -405,12 +424,16 @@ export default function ProjectsPage() {
                 <FolderKanban className="h-12 w-12 text-muted-foreground mb-4" />
                 <h3 className="text-lg font-semibold mb-2">No projects found</h3>
                 <p className="text-muted-foreground text-center mb-4">
-                  Get started by creating your first project
+                  {capabilities.canCreateProjects 
+                    ? "Get started by creating your first project"
+                    : "No projects assigned to you yet"}
                 </p>
-                <Button onClick={handleCreateProject} className="gap-2">
-                  <Plus className="h-4 w-4" />
-                  Create Project
-                </Button>
+                {capabilities.canCreateProjects && (
+                  <Button onClick={handleCreateProject} className="gap-2">
+                    <Plus className="h-4 w-4" />
+                    Create Project
+                  </Button>
+                )}
               </CardContent>
             </Card>
           ) : (

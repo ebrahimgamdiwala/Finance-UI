@@ -41,6 +41,8 @@ const NAV_ITEMS = {
     { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
     { label: "My Projects", href: "/dashboard/projects", icon: FolderKanban },
     { label: "My Tasks", href: "/dashboard/tasks", icon: FileText },
+    { label: "Timesheets", href: "/dashboard/timesheets", icon: Receipt },
+    { label: "Expenses", href: "/dashboard/expenses", icon: Wallet },
   ],
   SALES: [
     { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },

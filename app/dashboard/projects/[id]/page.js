@@ -130,6 +130,13 @@ export default function ProjectDetailPage() {
   }
 
   const statusConfig = STATUS_CONFIG[project.status] || STATUS_CONFIG.PLANNED;
+  const userRole = session?.user?.role;
+  const isAdmin = userRole === "ADMIN";
+  const isProjectManager = userRole === "PROJECT_MANAGER";
+  const isTeamMember = userRole === "TEAM_MEMBER";
+  const isProjectOwner = project.managerId === session?.user?.id;
+  const canManageProject = isAdmin || (isProjectManager && isProjectOwner);
+
   const profit = (project.totalRevenue || 0) - (project.totalCost || 0);
 
   return (
@@ -157,10 +164,17 @@ export default function ProjectDetailPage() {
             <p className="text-muted-foreground">{project.description}</p>
           )}
         </div>
-        <Button variant="outline" className="gap-2">
-          <Edit className="h-4 w-4" />
-          Edit Project
-        </Button>
+        {(session?.user?.role === "ADMIN" || 
+          session?.user?.role === "PROJECT_MANAGER" && project.managerId === session?.user?.id) && (
+          <Button 
+            variant="outline" 
+            className="gap-2"
+            onClick={() => router.push(`/dashboard/projects/${projectId}/edit`)}
+          >
+            <Edit className="h-4 w-4" />
+            Edit Project
+          </Button>
+        )}
       </div>
 
       {/* Quick Stats */}
@@ -274,7 +288,7 @@ export default function ProjectDetailPage() {
         <TabsList>
           <TabsTrigger value="project">Project</TabsTrigger>
           <TabsTrigger value="tasks">Tasks</TabsTrigger>
-          <TabsTrigger value="settings">Settings</TabsTrigger>
+          {canManageProject && <TabsTrigger value="settings">Settings</TabsTrigger>}
         </TabsList>
 
         {/* Project Tab */}
@@ -372,13 +386,20 @@ export default function ProjectDetailPage() {
             <div>
               <h2 className="text-2xl font-bold">Task Board</h2>
               <p className="text-muted-foreground">
-                Drag and drop tasks to update their status
+                {canManageProject 
+                  ? "Drag and drop tasks to update their status"
+                  : "View and update your assigned tasks"}
               </p>
             </div>
-            <CreateTaskDialog projectId={projectId} onTaskCreated={handleTaskCreated} />
+            {canManageProject && <CreateTaskDialog projectId={projectId} onTaskCreated={handleTaskCreated} />}
           </div>
 
-          <KanbanBoard tasks={project.tasks || []} onTaskUpdate={handleTaskUpdate} />
+          <KanbanBoard 
+            tasks={project.tasks || []} 
+            onTaskUpdate={handleTaskUpdate}
+            canManageTasks={canManageProject}
+            userId={session?.user?.id}
+          />
         </TabsContent>
 
         {/* Settings Tab */}

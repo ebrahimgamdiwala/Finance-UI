@@ -70,7 +70,9 @@ export default function TasksPage() {
   const [tasks, setTasks] = useState([]);
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState("all");
+  const [activeTab, setActiveTab] = useState(
+    session?.user?.role === "TEAM_MEMBER" ? "my" : "all"
+  );
   const [selectedProject, setSelectedProject] = useState("all");
   const [selectedPriority, setSelectedPriority] = useState("all");
   const [editDialogOpen, setEditDialogOpen] = useState(false);
@@ -87,14 +89,33 @@ export default function TasksPage() {
       fetchTasks();
       fetchProjects();
     }
-  }, [status]);
+  }, [status, activeTab]);
 
   const fetchTasks = async () => {
     try {
       setLoading(true);
-      const response = await fetch("/api/tasks");
+      const userRole = session?.user?.role;
+      
+      // Build URL based on role and active tab
+      let url = "/api/tasks";
+      
+      // For team members, determine if we should fetch only their tasks or all project tasks
+      if (userRole === "TEAM_MEMBER") {
+        // Only fetch "my tasks" when explicitly on the "my" tab
+        // For all other tabs (all, status tabs), fetch all project tasks
+        if (activeTab === "my") {
+          url = "/api/tasks?myTasks=true";
+        }
+        // For "all" or status tabs, don't pass myTasks parameter
+        // This will show all tasks from projects they're members of
+      }
+      
+      console.log("Fetching tasks with URL:", url, "Active tab:", activeTab);
+      
+      const response = await fetch(url);
       if (response.ok) {
         const data = await response.json();
+        console.log("Fetched tasks:", data.length, "tasks");
         setTasks(data);
       } else {
         console.error("Failed to fetch tasks");
@@ -167,8 +188,14 @@ export default function TasksPage() {
 
   // Filter tasks based on active tab, project, and priority
   const filteredTasks = tasks.filter((task) => {
-    // Filter by status tab
-    if (activeTab !== "all" && task.status !== activeTab) return false;
+    // Filter by status tab (skip for "my" and "all" tabs)
+    if (activeTab !== "all" && activeTab !== "my") {
+      // Check if activeTab is a status value
+      if (["NEW", "IN_PROGRESS", "BLOCKED", "DONE"].includes(activeTab)) {
+        console.log("Filtering by status:", activeTab, "Task status:", task.status, "Match:", task.status === activeTab);
+        if (task.status !== activeTab) return false;
+      }
+    }
     
     // Filter by project
     if (selectedProject !== "all" && task.projectId !== selectedProject) return false;
@@ -178,6 +205,8 @@ export default function TasksPage() {
     
     return true;
   });
+  
+  console.log("Total tasks:", tasks.length, "Filtered tasks:", filteredTasks.length, "Active tab:", activeTab);
 
   // Group tasks by status for statistics
   const taskStats = {
@@ -196,33 +225,34 @@ export default function TasksPage() {
     );
   }
 
-  // Check if user is PROJECT_MANAGER
-  if (session?.user?.role !== "PROJECT_MANAGER") {
-    return (
-      <div className="container mx-auto p-6">
-        <Card className="border-border/40">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-red-600">
-              <AlertCircle className="h-5 w-5" />
-              Access Denied
-            </CardTitle>
-            <CardDescription>
-              This page is only accessible to Project Managers.
-            </CardDescription>
-          </CardHeader>
-        </Card>
-      </div>
-    );
-  }
+  const userRole = session?.user?.role;
+  const isTeamMember = userRole === "TEAM_MEMBER";
+  const isProjectManager = userRole === "PROJECT_MANAGER";
+  const isAdmin = userRole === "ADMIN";
+
+  // Get appropriate page title and description based on role
+  const getPageTitle = () => {
+    if (isTeamMember) return "My Tasks";
+    if (isProjectManager) return "Project Tasks";
+    if (isAdmin) return "All Tasks";
+    return "Tasks";
+  };
+
+  const getPageDescription = () => {
+    if (isTeamMember) return "View and update your assigned tasks";
+    if (isProjectManager) return "Manage tasks across your projects";
+    if (isAdmin) return "System-wide task overview";
+    return "Task management";
+  };
 
   return (
     <div className="container mx-auto p-6 space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold">My Tasks</h1>
+          <h1 className="text-3xl font-bold">{getPageTitle()}</h1>
           <p className="text-muted-foreground mt-1">
-            Manage tasks from your projects
+            {getPageDescription()}
           </p>
         </div>
         <Badge variant="outline" className="text-sm">
@@ -325,15 +355,36 @@ export default function TasksPage() {
                 </SelectContent>
               </Select>
             </div>
+
+            <div className="flex items-end">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setSelectedProject("all");
+                  setSelectedPriority("all");
+                }}
+                disabled={selectedProject === "all" && selectedPriority === "all"}
+              >
+                Clear Filters
+              </Button>
+            </div>
           </div>
         </CardContent>
       </Card>
 
       {/* Tasks Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-5">
+        <TabsList className={cn(
+          "grid w-full",
+          isTeamMember ? "grid-cols-6" : "grid-cols-5"
+        )}>
+          {isTeamMember && (
+            <TabsTrigger value="my">
+              My Tasks
+            </TabsTrigger>
+          )}
           <TabsTrigger value="all">
-            All ({taskStats.all})
+            {isTeamMember ? "All" : `All (${taskStats.all})`}
           </TabsTrigger>
           <TabsTrigger value="NEW">
             New ({taskStats.NEW})

@@ -23,7 +23,7 @@ import {
 } from "@/components/ui/select";
 import { Loader2, X, ImageIcon } from "lucide-react";
 
-export default function EditTaskDialog({ isOpen, onClose, task, onTaskUpdated }) {
+export default function EditTaskDialog({ isOpen, onClose, task, onTaskUpdated, canManageTasks = true, userId }) {
   const [loading, setLoading] = useState(false);
   const [users, setUsers] = useState([]);
   const [imageFiles, setImageFiles] = useState([]);
@@ -263,13 +263,40 @@ export default function EditTaskDialog({ isOpen, onClose, task, onTaskUpdated })
 
   if (!task) return null;
 
+  // Check if user can edit this task
+  const isTaskOwner = task.assigneeId === userId;
+  const canEdit = canManageTasks || isTaskOwner;
+  
+  // Team members can only edit: status, loggedHours, and description
+  const isTeamMember = !canManageTasks && isTaskOwner;
+
+  if (!canEdit) {
+    return (
+      <Dialog open={isOpen} onOpenChange={onClose}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Access Denied</DialogTitle>
+            <DialogDescription>
+              You don't have permission to edit this task.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button onClick={onClose}>Close</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    );
+  }
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Edit Task</DialogTitle>
           <DialogDescription>
-            Update task details below
+            {isTeamMember 
+              ? "Update your task progress and log hours"
+              : "Update task details below"}
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit}>
@@ -296,6 +323,7 @@ export default function EditTaskDialog({ isOpen, onClose, task, onTaskUpdated })
                 onChange={handleChange}
                 placeholder="Enter task title"
                 required
+                disabled={isTeamMember}
                 className={fieldErrors.title ? 'border-red-500' : ''}
               />
               {fieldErrors.title && (
@@ -343,6 +371,7 @@ export default function EditTaskDialog({ isOpen, onClose, task, onTaskUpdated })
                 <Select
                   value={formData.priority}
                   onValueChange={(value) => handleSelectChange("priority", value)}
+                  disabled={isTeamMember}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Select priority" />
@@ -363,6 +392,7 @@ export default function EditTaskDialog({ isOpen, onClose, task, onTaskUpdated })
                 <Select
                   value={formData.assigneeId || "unassigned"}
                   onValueChange={(value) => handleSelectChange("assigneeId", value === "unassigned" ? "" : value)}
+                  disabled={isTeamMember}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Select assignee" />
@@ -387,6 +417,7 @@ export default function EditTaskDialog({ isOpen, onClose, task, onTaskUpdated })
                   value={formData.deadline}
                   onChange={handleChange}
                   min={new Date().toISOString().split('T')[0]}
+                  disabled={isTeamMember}
                   className={fieldErrors.deadline ? 'border-red-500' : ''}
                 />
                 {fieldErrors.deadline && (
@@ -408,6 +439,7 @@ export default function EditTaskDialog({ isOpen, onClose, task, onTaskUpdated })
                   value={formData.estimateHours}
                   onChange={handleChange}
                   placeholder="e.g., 8"
+                  disabled={isTeamMember}
                   className={fieldErrors.estimateHours ? 'border-red-500' : ''}
                 />
                 {fieldErrors.estimateHours && (

@@ -28,12 +28,40 @@ export async function GET(req) {
       whereClause.projectId = projectId;
     }
     
-    if (myTasks) {
-      whereClause.assigneeId = user.id;
-    }
-    
     // Filter based on role if no specific project
     if (!projectId && user.role === 'TEAM_MEMBER') {
+      if (myTasks) {
+        // Show only assigned tasks
+        whereClause.assigneeId = user.id;
+      } else {
+        // Show tasks from projects they're members of OR tasks assigned to them
+        const userProjects = await prisma.project.findMany({
+          where: {
+            members: {
+              some: {
+                userId: user.id,
+                isActive: true,
+              },
+            },
+          },
+          select: { id: true },
+        });
+        
+        const projectIds = userProjects.map(p => p.id);
+        
+        // Use OR condition: either in their projects OR assigned to them
+        if (projectIds.length > 0) {
+          whereClause.OR = [
+            { projectId: { in: projectIds } },
+            { assigneeId: user.id },
+          ];
+        } else {
+          // If no projects, just show tasks assigned to them
+          whereClause.assigneeId = user.id;
+        }
+      }
+    } else if (myTasks) {
+      // For other roles, myTasks means assigned to them
       whereClause.assigneeId = user.id;
     }
     
