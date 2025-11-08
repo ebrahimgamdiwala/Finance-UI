@@ -87,39 +87,38 @@ export default function RoleBasedNav() {
   const navItems = NAV_ITEMS[userRole] || NAV_ITEMS.TEAM_MEMBER;
 
   return (
-    <div className="border-b border-border/40 bg-card/50 backdrop-blur-sm sticky top-0 z-30">
-      <div className="container mx-auto px-4">
-        <div className="flex items-center justify-between h-16">
-          {/* Navigation Links */}
-          <nav className="flex items-center gap-1 overflow-x-auto">
-            {navItems.map((item) => {
-              const Icon = item.icon;
-              const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
-              
-              return (
-                <Link key={item.href} href={item.href}>
-                  <Button
-                    variant={isActive ? "secondary" : "ghost"}
-                    size="sm"
-                    className={cn(
-                      "gap-2 whitespace-nowrap",
-                      isActive && "bg-primary/10 text-primary hover:bg-primary/20"
-                    )}
-                  >
-                    <Icon className="h-4 w-4" />
-                    <span className="hidden sm:inline">{item.label}</span>
-                  </Button>
-                </Link>
-              );
-            })}
-          </nav>
+    <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-border/40 bg-background/30 backdrop-blur-lg shadow-lg">
+      {/* Navigation Links */}
+      <nav className="flex items-center gap-1">
+        {navItems.map((item) => {
+          const Icon = item.icon;
+          // Exact match for Dashboard, startsWith for other routes
+          const isActive = item.href === "/dashboard" 
+            ? pathname === "/dashboard"
+            : pathname === item.href || pathname.startsWith(item.href + "/");
+          
+          return (
+            <Link key={item.href} href={item.href}>
+              <Button
+                variant={isActive ? "secondary" : "ghost"}
+                size="sm"
+                className={cn(
+                  "gap-2 whitespace-nowrap rounded-full",
+                  isActive && "bg-primary/10 text-primary hover:bg-primary/20"
+                )}
+              >
+                <Icon className="h-4 w-4" />
+                <span className="hidden sm:inline">{item.label}</span>
+              </Button>
+            </Link>
+          );
+        })}
+      </nav>
 
-          {/* User Role Badge */}
-          <Badge variant="outline" className={cn("ml-4 whitespace-nowrap", ROLE_COLORS[userRole])}>
-            {ROLE_LABELS[userRole]}
-          </Badge>
-        </div>
-      </div>
+      {/* User Role Badge */}
+      <Badge variant="outline" className={cn("whitespace-nowrap rounded-full", ROLE_COLORS[userRole])}>
+        {ROLE_LABELS[userRole]}
+      </Badge>
     </div>
   );
 }

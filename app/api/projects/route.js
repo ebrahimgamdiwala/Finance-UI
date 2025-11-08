@@ -25,8 +25,18 @@ export async function GET(req) {
     
     // Filter based on role
     if (user.role === 'PROJECT_MANAGER') {
-      // Project managers see projects they manage
-      whereClause.managerId = user.id;
+      // Project managers see projects they manage OR are active members of
+      whereClause.OR = [
+        { managerId: user.id },
+        {
+          members: {
+            some: {
+              userId: user.id,
+              isActive: true,
+            },
+          },
+        },
+      ];
     } else if (user.role === 'TEAM_MEMBER') {
       // Team members see projects they're assigned to
       whereClause.members = {

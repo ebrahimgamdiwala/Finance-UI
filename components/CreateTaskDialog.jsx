@@ -21,12 +21,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Plus, Loader2 } from "lucide-react";
+import { Plus, Loader2, X, ImageIcon, ChevronLeft, ChevronRight } from "lucide-react";
 
 export default function CreateTaskDialog({ projectId, onTaskCreated, trigger }) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [users, setUsers] = useState([]);
+  const [imageFiles, setImageFiles] = useState([]);
+  const [imagePreviews, setImagePreviews] = useState([]);
+  const [uploadingImages, setUploadingImages] = useState(false);
   const [formData, setFormData] = useState({
     title: "",
     description: "",
@@ -36,6 +39,7 @@ export default function CreateTaskDialog({ projectId, onTaskCreated, trigger }) 
     deadline: "",
     estimateHours: "",
     coverUrl: "",
+    images: [],
   });
 
   useEffect(() => {
@@ -65,6 +69,71 @@ export default function CreateTaskDialog({ projectId, onTaskCreated, trigger }) 
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
+  const handleMultipleImagesChange = (e) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
+
+    // Validate file sizes
+    const validFiles = files.filter(file => {
+      if (file.size > 5 * 1024 * 1024) {
+        alert(`${file.name} is larger than 5MB`);
+        return false;
+      }
+      return true;
+    });
+
+    if (validFiles.length === 0) return;
+
+    setImageFiles(prev => [...prev, ...validFiles]);
+
+    // Create previews
+    validFiles.forEach(file => {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreviews(prev => [...prev, reader.result]);
+      };
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const handleRemoveImage = (index) => {
+    setImageFiles(prev => prev.filter((_, i) => i !== index));
+    setImagePreviews(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const uploadMultipleImages = async () => {
+    if (imageFiles.length === 0) return [];
+
+    setUploadingImages(true);
+    const uploadedUrls = [];
+
+    try {
+      for (const file of imageFiles) {
+        const formDataUpload = new FormData();
+        formDataUpload.append("file", file);
+
+        const response = await fetch("/api/upload/image", {
+          method: "POST",
+          body: formDataUpload,
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          uploadedUrls.push(data.url);
+        } else {
+          throw new Error(`Failed to upload ${file.name}`);
+        }
+      }
+      return uploadedUrls;
+    } catch (error) {
+      console.error("Error uploading images:", error);
+      alert("Failed to upload some images");
+      return uploadedUrls;
+    } finally {
+      setUploadingImages(false);
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -76,6 +145,16 @@ export default function CreateTaskDialog({ projectId, onTaskCreated, trigger }) 
     setLoading(true);
 
     try {
+      // Upload multiple images first if any are selected
+      let imageUrls = [];
+      if (imageFiles.length > 0) {
+        imageUrls = await uploadMultipleImages();
+        if (imageUrls.length === 0 && imageFiles.length > 0) {
+          setLoading(false);
+          return;
+        }
+      }
+
       const response = await fetch("/api/tasks", {
         method: "POST",
         headers: {
@@ -84,6 +163,7 @@ export default function CreateTaskDialog({ projectId, onTaskCreated, trigger }) 
         body: JSON.stringify({
           ...formData,
           projectId,
+          images: imageUrls,
         }),
       });
 
@@ -103,7 +183,10 @@ export default function CreateTaskDialog({ projectId, onTaskCreated, trigger }) 
           deadline: "",
           estimateHours: "",
           coverUrl: "",
+          images: [],
         });
+        setImageFiles([]);
+        setImagePreviews([]);
       } else {
         const error = await response.json();
         alert(error.error || "Failed to create task");
@@ -294,6 +377,58 @@ export default function CreateTaskDialog({ projectId, onTaskCreated, trigger }) 
                 </p>
               </div>
             </div>
+
+            {/* Multiple Images Upload */}
+            <div className="space-y-2">
+              <Label htmlFor="multipleImages">Task Images (Multiple)</Label>
+              <div className="flex flex-col gap-3">
+                <label
+                  htmlFor="multipleImages"
+                  className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-border/40 rounded-lg cursor-pointer hover:bg-muted/50 transition-colors"
+                >
+                  <div className="flex flex-col items-center justify-center gap-2 text-muted-foreground">
+                    <ImageIcon className="h-8 w-8" />
+                    <p className="text-sm font-medium">Click to upload task images</p>
+                    <p className="text-xs">PNG, JPG or WEBP (max 5MB each)</p>
+                  </div>
+                  <input
+                    id="multipleImages"
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    onChange={handleMultipleImagesChange}
+                    className="hidden"
+                  />
+                </label>
+
+                {/* Image Previews */}
+                {imagePreviews.length > 0 && (
+                  <div className="grid grid-cols-3 gap-2">
+                    {imagePreviews.map((preview, index) => (
+                      <div key={index} className="relative group">
+                        <img
+                          src={preview}
+                          alt={`Preview ${index + 1}`}
+                          className="w-full h-24 object-cover rounded-lg border border-border/40"
+                        />
+                        <Button
+                          type="button"
+                          variant="destructive"
+                          size="icon"
+                          className="absolute top-1 right-1 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                          onClick={() => handleRemoveImage(index)}
+                        >
+                          <X className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                <p className="text-xs text-muted-foreground">
+                  Upload multiple images to create a carousel in the task card
+                </p>
+              </div>
+            </div>
           </div>
 
           <DialogFooter>
@@ -304,11 +439,11 @@ export default function CreateTaskDialog({ projectId, onTaskCreated, trigger }) 
             >
               Cancel
             </Button>
-            <Button type="submit" disabled={loading}>
-              {loading ? (
+            <Button type="submit" disabled={loading || uploadingImages}>
+              {loading || uploadingImages ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                  Creating...
+                  {uploadingImages ? "Uploading Images..." : "Creating..."}
                 </>
               ) : (
                 "Create Task"

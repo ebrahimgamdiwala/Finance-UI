@@ -20,11 +20,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Loader2 } from "lucide-react";
+import { Loader2, X, ImageIcon } from "lucide-react";
 
 export default function EditTaskDialog({ isOpen, onClose, task, onTaskUpdated }) {
   const [loading, setLoading] = useState(false);
   const [users, setUsers] = useState([]);
+  const [imageFiles, setImageFiles] = useState([]);
+  const [imagePreviews, setImagePreviews] = useState([]);
+  const [uploadingImages, setUploadingImages] = useState(false);
   const [formData, setFormData] = useState({
     title: "",
     description: "",
@@ -33,7 +36,9 @@ export default function EditTaskDialog({ isOpen, onClose, task, onTaskUpdated })
     priority: "MEDIUM",
     deadline: "",
     estimateHours: "",
+    loggedHours: "",
     coverUrl: "",
+    images: [],
   });
 
   useEffect(() => {
@@ -47,8 +52,13 @@ export default function EditTaskDialog({ isOpen, onClose, task, onTaskUpdated })
         priority: task.priority || "MEDIUM",
         deadline: task.deadline ? new Date(task.deadline).toISOString().split('T')[0] : "",
         estimateHours: task.estimateHours || "",
+        loggedHours: task.loggedHours || "",
         coverUrl: task.coverUrl || "",
+        images: task.images || [],
       });
+      // Set existing images as previews
+      setImagePreviews(task.images || []);
+      setImageFiles([]);
       fetchUsers();
     }
   }, [isOpen, task]);
@@ -74,6 +84,83 @@ export default function EditTaskDialog({ isOpen, onClose, task, onTaskUpdated })
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
+  const handleMultipleImagesChange = (e) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
+
+    const validFiles = files.filter(file => {
+      if (file.size > 5 * 1024 * 1024) {
+        alert(`${file.name} is larger than 5MB`);
+        return false;
+      }
+      return true;
+    });
+
+    if (validFiles.length === 0) return;
+
+    setImageFiles(prev => [...prev, ...validFiles]);
+
+    validFiles.forEach(file => {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreviews(prev => [...prev, reader.result]);
+      };
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const handleRemoveImage = (index) => {
+    // Check if it's an existing image URL or a new file preview
+    const isExistingImage = index < (task?.images?.length || 0);
+    
+    if (isExistingImage) {
+      // Remove from existing images
+      setFormData(prev => ({
+        ...prev,
+        images: prev.images.filter((_, i) => i !== index)
+      }));
+    } else {
+      // Remove from new uploads
+      const newFileIndex = index - (task?.images?.length || 0);
+      setImageFiles(prev => prev.filter((_, i) => i !== newFileIndex));
+    }
+    
+    setImagePreviews(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const uploadMultipleImages = async () => {
+    if (imageFiles.length === 0) return [];
+
+    setUploadingImages(true);
+    const uploadedUrls = [];
+
+    try {
+      for (const file of imageFiles) {
+        const formDataUpload = new FormData();
+        formDataUpload.append("file", file);
+
+        const response = await fetch("/api/upload/image", {
+          method: "POST",
+          body: formDataUpload,
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          uploadedUrls.push(data.url);
+        } else {
+          throw new Error(`Failed to upload ${file.name}`);
+        }
+      }
+      return uploadedUrls;
+    } catch (error) {
+      console.error("Error uploading images:", error);
+      alert("Failed to upload some images");
+      return uploadedUrls;
+    } finally {
+      setUploadingImages(false);
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -85,6 +172,15 @@ export default function EditTaskDialog({ isOpen, onClose, task, onTaskUpdated })
     setLoading(true);
 
     try {
+      // Upload new images if any
+      let newImageUrls = [];
+      if (imageFiles.length > 0) {
+        newImageUrls = await uploadMultipleImages();
+      }
+
+      // Combine existing images with newly uploaded ones
+      const allImages = [...formData.images, ...newImageUrls];
+
       const response = await fetch(`/api/tasks/${task.id}`, {
         method: "PATCH",
         headers: {
@@ -92,6 +188,7 @@ export default function EditTaskDialog({ isOpen, onClose, task, onTaskUpdated })
         },
         body: JSON.stringify({
           ...formData,
+          images: allImages,
           assigneeId: formData.assigneeId === "unassigned" ? null : formData.assigneeId,
         }),
       });
@@ -275,7 +372,25 @@ export default function EditTaskDialog({ isOpen, onClose, task, onTaskUpdated })
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="coverUrl">Cover Image</Label>
+                <Label htmlFor="loggedHours">Logged Hours</Label>
+                <Input
+                  id="loggedHours"
+                  name="loggedHours"
+                  type="number"
+                  step="0.5"
+                  value={formData.loggedHours}
+                  onChange={handleChange}
+                  placeholder="e.g., 4.5"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Hours already logged on this task
+                </p>
+              </div>
+            </div>
+
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="coverUrl">Cover Image URL</Label>
                 <Input
                   id="coverUrl"
                   name="coverUrl"
@@ -284,20 +399,67 @@ export default function EditTaskDialog({ isOpen, onClose, task, onTaskUpdated })
                   placeholder="https://..."
                 />
               </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="coverFile">Upload Cover Image</Label>
+                <Input
+                  id="coverFile"
+                  type="file"
+                  accept="image/*"
+                  onChange={handleCoverUpload}
+                  className="text-sm"
+                />
+              </div>
             </div>
 
+            {/* Multiple Images Upload */}
             <div className="space-y-2">
-              <Label htmlFor="coverFile">Upload Cover Image</Label>
-              <Input
-                id="coverFile"
-                type="file"
-                accept="image/*"
-                onChange={handleCoverUpload}
-                className="text-sm"
-              />
-              <p className="text-xs text-muted-foreground">
-                Upload an image or paste a URL above
-              </p>
+              <Label htmlFor="multipleImages">Task Images (Multiple)</Label>
+              <div className="flex flex-col gap-3">
+                <label
+                  htmlFor="multipleImages"
+                  className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-border/40 rounded-lg cursor-pointer hover:bg-muted/50 transition-colors"
+                >
+                  <div className="flex flex-col items-center justify-center gap-2 text-muted-foreground">
+                    <ImageIcon className="h-8 w-8" />
+                    <p className="text-sm font-medium">Click to add more images</p>
+                    <p className="text-xs">PNG, JPG or WEBP (max 5MB each)</p>
+                  </div>
+                  <input
+                    id="multipleImages"
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    onChange={handleMultipleImagesChange}
+                    className="hidden"
+                  />
+                </label>
+
+                {/* Image Previews */}
+                {imagePreviews.length > 0 && (
+                  <div className="grid grid-cols-3 gap-2">
+                    {imagePreviews.map((preview, index) => (
+                      <div key={index} className="relative group">
+                        <img
+                          src={preview}
+                          alt={`Preview ${index + 1}`}
+                          className="w-full h-24 object-cover rounded-lg border border-border/40"
+                        />
+                        <button
+                          type="button"
+                          className="absolute top-1 right-1 h-6 w-6 bg-red-500 hover:bg-red-600 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"
+                          onClick={() => handleRemoveImage(index)}
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                <p className="text-xs text-muted-foreground">
+                  {imagePreviews.length} image(s) - Images will be shown in a carousel
+                </p>
+              </div>
             </div>
           </div>
 
@@ -310,11 +472,11 @@ export default function EditTaskDialog({ isOpen, onClose, task, onTaskUpdated })
             >
               Cancel
             </Button>
-            <Button type="submit" disabled={loading}>
-              {loading ? (
+            <Button type="submit" disabled={loading || uploadingImages}>
+              {loading || uploadingImages ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                  Updating...
+                  {uploadingImages ? "Uploading Images..." : "Updating..."}
                 </>
               ) : (
                 "Update Task"

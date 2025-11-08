@@ -111,13 +111,20 @@ export async function GET(req, context) {
     }
     
     // Check access permissions
-    if (user.role === 'PROJECT_MANAGER' && project.managerId !== user.id) {
-      return NextResponse.json(
-        { error: 'Forbidden - You can only view projects you manage' },
-        { status: 403 }
-      );
+    // Project managers may view projects they manage; additionally allow
+    // access if they are an active member of the project. Team members
+    // can view projects only if they are assigned to them.
+    if (user.role === 'PROJECT_MANAGER') {
+      const isManager = project.managerId === user.id;
+      const isMember = project.members.some(m => m.userId === user.id && m.isActive);
+      if (!isManager && !isMember) {
+        return NextResponse.json(
+          { error: 'Forbidden - You can only view projects you manage or are assigned to' },
+          { status: 403 }
+        );
+      }
     }
-    
+
     if (user.role === 'TEAM_MEMBER') {
       const isMember = project.members.some(m => m.userId === user.id && m.isActive);
       if (!isMember) {

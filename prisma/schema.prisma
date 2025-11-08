@@ -166,6 +166,7 @@ model Task {
   loggedHours  Decimal?    @db.Decimal(8,2) @default(0.00)
   orderIndex   Int?
   coverUrl     String?
+  images       String[]    @default([])
   createdAt    DateTime    @default(now())
   updatedAt    DateTime    @updatedAt
 

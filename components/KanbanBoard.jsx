@@ -3,6 +3,7 @@
 import { useState, useMemo } from "react";
 import UploadCoverDialog from "./UploadCoverDialog";
 import EditTaskDialog from "./EditTaskDialog";
+import ImageCarousel from "./ImageCarousel";
 import {
   DndContext,
   DragOverlay,
@@ -146,8 +147,12 @@ function TaskCard({ task, isDragging, onEdit, onDelete, onChangeCover }) {
         </div>
 
         <CardContent className="p-4 cursor-pointer" onClick={handleCardClick}>
-          {/* Cover Image */}
-          {task.coverUrl && (
+          {/* Image Carousel or Cover Image */}
+          {task.images && task.images.length > 0 ? (
+            <div className="mb-3 -mx-4 -mt-4 h-32 overflow-hidden rounded-t-lg">
+              <ImageCarousel images={task.images} />
+            </div>
+          ) : task.coverUrl ? (
             <div className="mb-3 -mx-4 -mt-4 h-32 overflow-hidden rounded-t-lg relative group/cover">
               <img
                 src={task.coverUrl}
@@ -167,18 +172,22 @@ function TaskCard({ task, isDragging, onEdit, onDelete, onChangeCover }) {
                 </svg>
               </button>
             </div>
-          )}
+          ) : null}
 
-          {/* Header: Feedback/Bug badges and Priority */}
+          {/* Header: Priority Badge and Stars */}
           <div className="flex items-start justify-between mb-2">
-            <div className="flex gap-1">
-              <Badge variant="outline" className="text-xs bg-green-500/10 text-green-600 border-green-500/20">
-                Feedback
-              </Badge>
-              <Badge variant="outline" className="text-xs bg-red-500/10 text-red-600 border-red-500/20">
-                Bug
-              </Badge>
-            </div>
+            <Badge 
+              variant="outline" 
+              className={cn(
+                "text-xs",
+                task.priority === "CRITICAL" && "bg-red-500/10 text-red-600 border-red-500/20",
+                task.priority === "HIGH" && "bg-orange-500/10 text-orange-600 border-orange-500/20",
+                task.priority === "MEDIUM" && "bg-yellow-500/10 text-yellow-600 border-yellow-500/20",
+                task.priority === "LOW" && "bg-gray-500/10 text-gray-600 border-gray-500/20"
+              )}
+            >
+              {PRIORITY_LABELS[task.priority]}
+            </Badge>
             {renderPriorityStars()}
           </div>
 
@@ -194,11 +203,46 @@ function TaskCard({ task, isDragging, onEdit, onDelete, onChangeCover }) {
             {task.title}
           </h4>
 
-          {/* Deadline */}
-          {task.deadline && (
-            <div className="flex items-center gap-1 text-xs text-muted-foreground mb-3">
-              <Calendar className="h-3 w-3" />
-              <span>{formatDate(task.deadline)}</span>
+          {/* Description Preview */}
+          {task.description && (
+            <p className="text-xs text-muted-foreground mb-2 line-clamp-2">
+              {task.description}
+            </p>
+          )}
+
+          {/* Deadline and Time Tracking */}
+          <div className="flex items-center gap-3 text-xs text-muted-foreground mb-3">
+            {task.deadline && (
+              <div className="flex items-center gap-1">
+                <Calendar className="h-3 w-3" />
+                <span>{formatDate(task.deadline)}</span>
+              </div>
+            )}
+            {(task.estimateHours || task.loggedHours) && (
+              <div className="flex items-center gap-1">
+                <Clock className="h-3 w-3" />
+                <span>
+                  {task.loggedHours || 0}h / {task.estimateHours || 0}h
+                </span>
+              </div>
+            )}
+          </div>
+
+          {/* Metadata: Comments, Attachments */}
+          {(task._count?.comments > 0 || task._count?.attachments > 0) && (
+            <div className="flex items-center gap-3 text-xs text-muted-foreground mb-2">
+              {task._count?.comments > 0 && (
+                <div className="flex items-center gap-1">
+                  <MessageSquare className="h-3 w-3" />
+                  <span>{task._count.comments}</span>
+                </div>
+              )}
+              {task._count?.attachments > 0 && (
+                <div className="flex items-center gap-1">
+                  <Paperclip className="h-3 w-3" />
+                  <span>{task._count.attachments}</span>
+                </div>
+              )}
             </div>
           )}
 

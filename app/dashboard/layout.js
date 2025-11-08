@@ -28,8 +28,16 @@ export default function DashboardLayout({ children }) {
 
   return (
     <>
-      {/* Navbar */}
+      {/* Top Navigation Bar */}
       <div className="fixed top-0 left-0 right-0 z-40 pointer-events-none">
+        {/* Centered Role-Based Navigation Pills */}
+        <div className="absolute top-0 left-0 right-0 flex justify-center items-center pt-6 pointer-events-none">
+          <div className="pointer-events-auto">
+            <RoleBasedNav />
+          </div>
+        </div>
+
+        {/* StaggeredMenu (Logo, Theme Toggle, Menu Button) */}
         <div className="pointer-events-auto">
           <StaggeredMenu
             position="right"
@@ -55,13 +63,8 @@ export default function DashboardLayout({ children }) {
         </div>
       </div>
 
-      {/* Role-Based Navigation */}
-      <div className="pt-20">
-        <RoleBasedNav />
-      </div>
-
       {/* Main Content */}
-      <main>
+      <main className="pt-24">
         {children}
       </main>
     </>

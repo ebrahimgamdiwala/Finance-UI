@@ -15,7 +15,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ArrowLeft, Save, Loader2 } from "lucide-react";
+import { ArrowLeft, Save, Loader2, Upload, X, Image as ImageIcon } from "lucide-react";
 
 export default function NewProjectPage() {
   const { data: session, status } = useSession();
@@ -23,6 +23,9 @@ export default function NewProjectPage() {
   const [loading, setLoading] = useState(false);
   const [users, setUsers] = useState([]);
   const [selectedMembers, setSelectedMembers] = useState([]);
+  const [imageFile, setImageFile] = useState(null);
+  const [imagePreview, setImagePreview] = useState(null);
+  const [uploadingImage, setUploadingImage] = useState(false);
 
   const [formData, setFormData] = useState({
     name: "",
@@ -33,6 +36,7 @@ export default function NewProjectPage() {
     startDate: "",
     endDate: "",
     budget: "",
+    imageUrl: "",
   });
 
   useEffect(() => {
@@ -72,6 +76,57 @@ export default function NewProjectPage() {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
+  const handleImageChange = (e) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) { // 5MB limit
+        alert("Image size should be less than 5MB");
+        return;
+      }
+      
+      setImageFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleRemoveImage = () => {
+    setImageFile(null);
+    setImagePreview(null);
+    setFormData((prev) => ({ ...prev, imageUrl: "" }));
+  };
+
+  const uploadImage = async () => {
+    if (!imageFile) return null;
+
+    setUploadingImage(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", imageFile);
+
+      const response = await fetch("/api/upload/image", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        return data.url;
+      } else {
+        throw new Error("Failed to upload image");
+      }
+    } catch (error) {
+      console.error("Error uploading image:", error);
+      alert("Failed to upload image");
+      return null;
+    } finally {
+      setUploadingImage(false);
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     
@@ -83,6 +138,16 @@ export default function NewProjectPage() {
     setLoading(true);
 
     try {
+      // Upload image first if one is selected
+      let imageUrl = formData.imageUrl;
+      if (imageFile) {
+        imageUrl = await uploadImage();
+        if (!imageUrl) {
+          setLoading(false);
+          return;
+        }
+      }
+
       const response = await fetch("/api/projects", {
         method: "POST",
         headers: {
@@ -90,6 +155,7 @@ export default function NewProjectPage() {
         },
         body: JSON.stringify({
           ...formData,
+          imageUrl,
           memberIds: selectedMembers,
         }),
       });
@@ -191,6 +257,50 @@ export default function NewProjectPage() {
                   placeholder="Enter project description"
                   rows={4}
                 />
+              </div>
+
+              {/* Image Upload */}
+              <div className="space-y-2">
+                <Label htmlFor="image">Project Image</Label>
+                <div className="flex flex-col gap-4">
+                  {imagePreview ? (
+                    <div className="relative w-full max-w-md">
+                      <img
+                        src={imagePreview}
+                        alt="Project preview"
+                        className="w-full h-48 object-cover rounded-lg border border-border/40"
+                      />
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        size="icon"
+                        className="absolute top-2 right-2"
+                        onClick={handleRemoveImage}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ) : (
+                    <label
+                      htmlFor="image"
+                      className="flex flex-col items-center justify-center w-full max-w-md h-48 border-2 border-dashed border-border/40 rounded-lg cursor-pointer hover:bg-muted/50 transition-colors"
+                    >
+                      <div className="flex flex-col items-center justify-center gap-2 text-muted-foreground">
+                        <ImageIcon className="h-10 w-10" />
+                        <p className="text-sm font-medium">Click to upload project image</p>
+                        <p className="text-xs">PNG, JPG or WEBP (max 5MB)</p>
+                      </div>
+                      <input
+                        id="image"
+                        name="image"
+                        type="file"
+                        accept="image/*"
+                        onChange={handleImageChange}
+                        className="hidden"
+                      />
+                    </label>
+                  )}
+                </div>
               </div>
 
               <div className="grid gap-4 md:grid-cols-2">
@@ -332,7 +442,7 @@ export default function NewProjectPage() {
               {loading ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin" />
-                  Creating...
+                  {uploadingImage ? "Uploading Image..." : "Creating..."}
                 </>
               ) : (
                 <>

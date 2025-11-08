@@ -37,6 +37,36 @@ export async function GET(req) {
       whereClause.assigneeId = user.id;
     }
     
+    // For PROJECT_MANAGER: only show tasks from projects they manage or are members of
+    if (!projectId && user.role === 'PROJECT_MANAGER') {
+      // Get all projects where user is manager or active member
+      const userProjects = await prisma.project.findMany({
+        where: {
+          OR: [
+            { managerId: user.id },
+            {
+              members: {
+                some: {
+                  userId: user.id,
+                  isActive: true,
+                },
+              },
+            },
+          ],
+        },
+        select: { id: true },
+      });
+      
+      const projectIds = userProjects.map(p => p.id);
+      
+      if (projectIds.length > 0) {
+        whereClause.projectId = { in: projectIds };
+      } else {
+        // If no projects found, return empty array
+        return NextResponse.json([]);
+      }
+    }
+    
     const tasks = await prisma.task.findMany({
       where: whereClause,
       include: {
@@ -106,6 +136,7 @@ export async function POST(req) {
       deadline,
       estimateHours,
       coverUrl,
+      images,
     } = body;
     
     // Validate required fields
@@ -143,6 +174,7 @@ export async function POST(req) {
         deadline: deadline ? new Date(deadline) : null,
         estimateHours: estimateHours ? parseFloat(estimateHours) : null,
         coverUrl,
+        images: images || [],
         orderIndex,
       },
       include: {
@@ -159,6 +191,13 @@ export async function POST(req) {
             name: true,
             email: true,
             avatarUrl: true,
+          },
+        },
+        _count: {
+          select: {
+            comments: true,
+            attachments: true,
+            timesheets: true,
           },
         },
       },

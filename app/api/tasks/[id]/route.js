@@ -132,6 +132,7 @@ export async function PATCH(req, context) {
       loggedHours,
       orderIndex,
       coverUrl,
+      images,
     } = body;
     
     // Prepare update data
@@ -146,6 +147,7 @@ export async function PATCH(req, context) {
     if (loggedHours !== undefined) updateData.loggedHours = parseFloat(loggedHours);
     if (orderIndex !== undefined) updateData.orderIndex = parseInt(orderIndex);
     if (coverUrl !== undefined) updateData.coverUrl = coverUrl;
+    if (images !== undefined) updateData.images = images;
     
     const task = await prisma.task.update({
       where: { id },
@@ -164,6 +166,13 @@ export async function PATCH(req, context) {
             name: true,
             email: true,
             avatarUrl: true,
+          },
+        },
+        _count: {
+          select: {
+            comments: true,
+            attachments: true,
+            timesheets: true,
           },
         },
       },
