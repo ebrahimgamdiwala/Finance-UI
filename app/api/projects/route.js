@@ -19,6 +19,9 @@ export async function GET(req) {
   const { user } = authResult;
   const { searchParams } = new URL(req.url);
   const status = searchParams.get('status');
+  const limit = parseInt(searchParams.get('limit')) || 50; // Default limit
+  const page = parseInt(searchParams.get('page')) || 1;
+  const skip = (page - 1) * limit;
   
   try {
     let whereClause = {};
@@ -66,6 +69,8 @@ export async function GET(req) {
     
     const projects = await prisma.project.findMany({
       where: whereClause,
+      take: limit,
+      skip: skip,
       include: {
         manager: {
           select: {

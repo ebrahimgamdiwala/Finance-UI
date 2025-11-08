@@ -93,16 +93,32 @@ export default function PurchaseOrderActivitiesPage() {
     }
   }, [selectedPO]);
 
-  // Real-time polling every 3 seconds
+  // Real-time polling every 5 seconds (optimized from 3s)
+  // Only poll when page is visible
   useEffect(() => {
-    const interval = setInterval(() => {
-      fetchPurchaseOrders();
-      if (selectedPO) {
+    // Check if page is visible
+    const handleVisibilityChange = () => {
+      if (!document.hidden && selectedPO) {
         fetchActivities();
       }
-    }, 3000);
+    };
 
-    return () => clearInterval(interval);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    const interval = setInterval(() => {
+      // Only fetch if page is visible
+      if (!document.hidden) {
+        fetchPurchaseOrders();
+        if (selectedPO) {
+          fetchActivities();
+        }
+      }
+    }, 5000); // Increased from 3000ms to 5000ms
+
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
   }, [selectedPO]);
 
   // Add comment

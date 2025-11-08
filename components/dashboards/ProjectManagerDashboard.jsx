@@ -42,8 +42,15 @@ export default function ProjectManagerDashboard({ user }) {
 
   const fetchDashboardData = async () => {
     try {
-      // Fetch projects
-      const projectsRes = await fetch("/api/projects");
+      // Fetch all data in parallel for better performance
+      const [projectsRes, salesOrdersRes, tasksRes, usersRes] = await Promise.all([
+        fetch("/api/projects"),
+        fetch("/api/sales-orders?status=PENDING_APPROVAL"),
+        fetch("/api/tasks"),
+        fetch("/api/users"),
+      ]);
+
+      // Process projects
       if (projectsRes.ok) {
         const projectsData = await projectsRes.json();
         const active = projectsData.filter((p) => p.status === "IN_PROGRESS").length;
@@ -55,8 +62,7 @@ export default function ProjectManagerDashboard({ user }) {
         setProjects(projectsData.slice(0, 6));
       }
 
-      // Fetch pending sales orders
-      const salesOrdersRes = await fetch("/api/sales-orders?status=PENDING_APPROVAL");
+      // Process pending sales orders
       if (salesOrdersRes.ok) {
         const salesOrders = await salesOrdersRes.json();
         
@@ -69,8 +75,7 @@ export default function ProjectManagerDashboard({ user }) {
         }));
       }
 
-      // Fetch tasks
-      const tasksRes = await fetch("/api/tasks");
+      // Process tasks
       if (tasksRes.ok) {
         const tasks = await tasksRes.json();
         const delayed = tasks.filter(
@@ -83,8 +88,7 @@ export default function ProjectManagerDashboard({ user }) {
         }));
       }
 
-      // Fetch team members
-      const usersRes = await fetch("/api/users");
+      // Process team members
       if (usersRes.ok) {
         const users = await usersRes.json();
         const teamCount = users.filter((u) => u.role === "TEAM_MEMBER").length;
