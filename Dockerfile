@@ -6,10 +6,12 @@ RUN apk add --no-cache libc6-compat openssl
 WORKDIR /app
 
 # Copy package files
-COPY package.json package-lock.json ./
+COPY package.json package-lock.json* ./
 
 # Install all dependencies (including devDependencies for build)
-RUN npm ci
+# Note: Using npm install instead of npm ci to handle lock file updates during development
+# For production, ensure package-lock.json is committed and use npm ci
+RUN npm install || npm ci
 
 # Stage 2: Builder
 FROM node:20-alpine AS builder
