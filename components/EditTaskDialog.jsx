@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { taskSchema } from "@/lib/validations";
 import {
   Dialog,
   DialogContent,
@@ -28,6 +29,7 @@ export default function EditTaskDialog({ isOpen, onClose, task, onTaskUpdated })
   const [imageFiles, setImageFiles] = useState([]);
   const [imagePreviews, setImagePreviews] = useState([]);
   const [uploadingImages, setUploadingImages] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState({});
   const [formData, setFormData] = useState({
     title: "",
     description: "",
@@ -78,10 +80,18 @@ export default function EditTaskDialog({ isOpen, onClose, task, onTaskUpdated })
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
+    // Clear field error when user starts typing
+    if (fieldErrors[name]) {
+      setFieldErrors((prev) => ({ ...prev, [name]: undefined }));
+    }
   };
 
   const handleSelectChange = (name, value) => {
     setFormData((prev) => ({ ...prev, [name]: value }));
+    // Clear field error when user changes selection
+    if (fieldErrors[name]) {
+      setFieldErrors((prev) => ({ ...prev, [name]: undefined }));
+    }
   };
 
   const handleMultipleImagesChange = (e) => {
@@ -163,9 +173,24 @@ export default function EditTaskDialog({ isOpen, onClose, task, onTaskUpdated })
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setFieldErrors({});
 
-    if (!formData.title) {
-      alert("Task title is required");
+    // Validate form data with Zod
+    const validation = taskSchema.safeParse(formData);
+    
+    if (!validation.success) {
+      const errors = {};
+      const errorMessages = [];
+      if (validation.error?.issues) {
+        validation.error.issues.forEach((err) => {
+          const field = err.path[0];
+          errors[field] = err.message;
+          const fieldName = field.charAt(0).toUpperCase() + field.slice(1).replace(/([A-Z])/g, ' $1');
+          errorMessages.push(`• ${fieldName}: ${err.message}`);
+        });
+      }
+      setFieldErrors(errors);
+      alert(`Please fix the following validation errors:\n\n${errorMessages.join('\n')}`);
       return;
     }
 
@@ -271,7 +296,11 @@ export default function EditTaskDialog({ isOpen, onClose, task, onTaskUpdated })
                 onChange={handleChange}
                 placeholder="Enter task title"
                 required
+                className={fieldErrors.title ? 'border-red-500' : ''}
               />
+              {fieldErrors.title && (
+                <p className="text-xs text-red-600 dark:text-red-400">{fieldErrors.title}</p>
+              )}
             </div>
 
             <div className="space-y-2">
@@ -283,7 +312,11 @@ export default function EditTaskDialog({ isOpen, onClose, task, onTaskUpdated })
                 onChange={handleChange}
                 placeholder="Enter task description"
                 rows={3}
+                className={fieldErrors.description ? 'border-red-500' : ''}
               />
+              {fieldErrors.description && (
+                <p className="text-xs text-red-600 dark:text-red-400">{fieldErrors.description}</p>
+              )}
             </div>
 
             <div className="grid gap-4 md:grid-cols-2">
@@ -353,7 +386,12 @@ export default function EditTaskDialog({ isOpen, onClose, task, onTaskUpdated })
                   type="date"
                   value={formData.deadline}
                   onChange={handleChange}
+                  min={new Date().toISOString().split('T')[0]}
+                  className={fieldErrors.deadline ? 'border-red-500' : ''}
                 />
+                {fieldErrors.deadline && (
+                  <p className="text-xs text-red-600 dark:text-red-400">{fieldErrors.deadline}</p>
+                )}
               </div>
             </div>
 
@@ -365,10 +403,16 @@ export default function EditTaskDialog({ isOpen, onClose, task, onTaskUpdated })
                   name="estimateHours"
                   type="number"
                   step="0.5"
+                  min="0"
+                  max="10000"
                   value={formData.estimateHours}
                   onChange={handleChange}
                   placeholder="e.g., 8"
+                  className={fieldErrors.estimateHours ? 'border-red-500' : ''}
                 />
+                {fieldErrors.estimateHours && (
+                  <p className="text-xs text-red-600 dark:text-red-400">{fieldErrors.estimateHours}</p>
+                )}
               </div>
 
               <div className="space-y-2">
@@ -378,10 +422,16 @@ export default function EditTaskDialog({ isOpen, onClose, task, onTaskUpdated })
                   name="loggedHours"
                   type="number"
                   step="0.5"
+                  min="0"
+                  max="10000"
                   value={formData.loggedHours}
                   onChange={handleChange}
                   placeholder="e.g., 4.5"
+                  className={fieldErrors.loggedHours ? 'border-red-500' : ''}
                 />
+                {fieldErrors.loggedHours && (
+                  <p className="text-xs text-red-600 dark:text-red-400">{fieldErrors.loggedHours}</p>
+                )}
                 <p className="text-xs text-muted-foreground">
                   Hours already logged on this task
                 </p>
@@ -397,7 +447,11 @@ export default function EditTaskDialog({ isOpen, onClose, task, onTaskUpdated })
                   value={formData.coverUrl}
                   onChange={handleChange}
                   placeholder="https://..."
+                  className={fieldErrors.coverUrl ? 'border-red-500' : ''}
                 />
+                {fieldErrors.coverUrl && (
+                  <p className="text-xs text-red-600 dark:text-red-400">{fieldErrors.coverUrl}</p>
+                )}
               </div>
 
               <div className="space-y-2">

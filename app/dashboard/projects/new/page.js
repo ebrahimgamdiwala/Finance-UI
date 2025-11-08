@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import { projectSchema } from "@/lib/validations";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -26,6 +27,7 @@ export default function NewProjectPage() {
   const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
   const [uploadingImage, setUploadingImage] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState({});
 
   const [formData, setFormData] = useState({
     name: "",
@@ -70,10 +72,18 @@ export default function NewProjectPage() {
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
+    // Clear field error when user starts typing
+    if (fieldErrors[name]) {
+      setFieldErrors((prev) => ({ ...prev, [name]: undefined }));
+    }
   };
 
   const handleSelectChange = (name, value) => {
     setFormData((prev) => ({ ...prev, [name]: value }));
+    // Clear field error when user changes selection
+    if (fieldErrors[name]) {
+      setFieldErrors((prev) => ({ ...prev, [name]: undefined }));
+    }
   };
 
   const handleImageChange = (e) => {
@@ -129,9 +139,27 @@ export default function NewProjectPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setFieldErrors({});
+
+    // Validate form data with Zod
+    const validation = projectSchema.safeParse({
+      ...formData,
+      memberIds: selectedMembers,
+    });
     
-    if (!formData.name) {
-      alert("Project name is required");
+    if (!validation.success) {
+      const errors = {};
+      const errorMessages = [];
+      if (validation.error?.issues) {
+        validation.error.issues.forEach((err) => {
+          const field = err.path[0];
+          errors[field] = err.message;
+          const fieldName = field.charAt(0).toUpperCase() + field.slice(1).replace(/([A-Z])/g, ' $1');
+          errorMessages.push(`• ${fieldName}: ${err.message}`);
+        });
+      }
+      setFieldErrors(errors);
+      alert(`Please fix the following validation errors:\n\n${errorMessages.join('\n')}`);
       return;
     }
 
@@ -232,7 +260,11 @@ export default function NewProjectPage() {
                     onChange={handleChange}
                     placeholder="Enter project name"
                     required
+                    className={fieldErrors.name ? 'border-red-500' : ''}
                   />
+                  {fieldErrors.name && (
+                    <p className="text-xs text-red-600 dark:text-red-400">{fieldErrors.name}</p>
+                  )}
                 </div>
 
                 <div className="space-y-2">
@@ -243,7 +275,11 @@ export default function NewProjectPage() {
                     value={formData.code}
                     onChange={handleChange}
                     placeholder="e.g., PROJ-001"
+                    className={fieldErrors.code ? 'border-red-500' : ''}
                   />
+                  {fieldErrors.code && (
+                    <p className="text-xs text-red-600 dark:text-red-400">{fieldErrors.code}</p>
+                  )}
                 </div>
               </div>
 
@@ -256,7 +292,11 @@ export default function NewProjectPage() {
                   onChange={handleChange}
                   placeholder="Enter project description"
                   rows={4}
+                  className={fieldErrors.description ? 'border-red-500' : ''}
                 />
+                {fieldErrors.description && (
+                  <p className="text-xs text-red-600 dark:text-red-400">{fieldErrors.description}</p>
+                )}
               </div>
 
               {/* Image Upload */}
@@ -310,7 +350,7 @@ export default function NewProjectPage() {
                     value={formData.status}
                     onValueChange={(value) => handleSelectChange("status", value)}
                   >
-                    <SelectTrigger>
+                    <SelectTrigger className={fieldErrors.status ? 'border-red-500' : ''}>
                       <SelectValue placeholder="Select status" />
                     </SelectTrigger>
                     <SelectContent>
@@ -320,6 +360,9 @@ export default function NewProjectPage() {
                       <SelectItem value="COMPLETED">Completed</SelectItem>
                     </SelectContent>
                   </Select>
+                  {fieldErrors.status && (
+                    <p className="text-xs text-red-600 dark:text-red-400">{fieldErrors.status}</p>
+                  )}
                 </div>
 
                 <div className="space-y-2">
@@ -328,7 +371,7 @@ export default function NewProjectPage() {
                     value={formData.managerId}
                     onValueChange={(value) => handleSelectChange("managerId", value)}
                   >
-                    <SelectTrigger>
+                    <SelectTrigger className={fieldErrors.managerId ? 'border-red-500' : ''}>
                       <SelectValue placeholder="Select manager" />
                     </SelectTrigger>
                     <SelectContent>
@@ -341,6 +384,9 @@ export default function NewProjectPage() {
                         ))}
                     </SelectContent>
                   </Select>
+                  {fieldErrors.managerId && (
+                    <p className="text-xs text-red-600 dark:text-red-400">{fieldErrors.managerId}</p>
+                  )}
                 </div>
               </div>
             </CardContent>
@@ -364,7 +410,12 @@ export default function NewProjectPage() {
                     type="date"
                     value={formData.startDate}
                     onChange={handleChange}
+                    min={new Date().toISOString().split('T')[0]}
+                    className={fieldErrors.startDate ? 'border-red-500' : ''}
                   />
+                  {fieldErrors.startDate && (
+                    <p className="text-xs text-red-600 dark:text-red-400">{fieldErrors.startDate}</p>
+                  )}
                 </div>
 
                 <div className="space-y-2">
@@ -375,7 +426,12 @@ export default function NewProjectPage() {
                     type="date"
                     value={formData.endDate}
                     onChange={handleChange}
+                    min={new Date().toISOString().split('T')[0]}
+                    className={fieldErrors.endDate ? 'border-red-500' : ''}
                   />
+                  {fieldErrors.endDate && (
+                    <p className="text-xs text-red-600 dark:text-red-400">{fieldErrors.endDate}</p>
+                  )}
                 </div>
               </div>
 
@@ -386,10 +442,16 @@ export default function NewProjectPage() {
                   name="budget"
                   type="number"
                   step="0.01"
+                  min="0"
+                  max="1000000000"
                   value={formData.budget}
                   onChange={handleChange}
                   placeholder="Enter project budget"
+                  className={fieldErrors.budget ? 'border-red-500' : ''}
                 />
+                {fieldErrors.budget && (
+                  <p className="text-xs text-red-600 dark:text-red-400">{fieldErrors.budget}</p>
+                )}
               </div>
             </CardContent>
           </Card>

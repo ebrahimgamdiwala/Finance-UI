@@ -13,6 +13,7 @@ import {
   User, Mail, Shield, DollarSign, Save, Loader2, 
   ArrowLeft, CheckCircle2, AlertCircle, Upload, Camera 
 } from "lucide-react";
+import { profileSchema } from "@/lib/validations";
 
 export default function ProfilePage() {
   const { data: session, status, update } = useSession();
@@ -20,6 +21,7 @@ export default function ProfilePage() {
   const [isLoading, setIsLoading] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [message, setMessage] = useState({ type: "", text: "" });
+  const [fieldErrors, setFieldErrors] = useState({});
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -103,16 +105,46 @@ export default function ProfilePage() {
   };
 
   const handleChange = (e) => {
+    const { name, value } = e.target;
     setFormData({
       ...formData,
-      [e.target.name]: e.target.value,
+      [name]: value,
     });
+    // Clear field error when user starts typing
+    if (fieldErrors[name]) {
+      setFieldErrors((prev) => {
+        const newErrors = { ...prev };
+        delete newErrors[name];
+        return newErrors;
+      });
+    }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
     setMessage({ type: "", text: "" });
+    setFieldErrors({});
+
+    // Validate form data with Zod
+    const validation = profileSchema.safeParse({
+      name: formData.name,
+      hourlyRate: formData.hourlyRate ? parseFloat(formData.hourlyRate) : undefined,
+      avatarUrl: formData.avatarUrl || undefined,
+    });
+
+    if (!validation.success) {
+      const errors = {};
+      if (validation.error?.issues) {
+        validation.error.issues.forEach((err) => {
+          errors[err.path[0]] = err.message;
+        });
+      }
+      setFieldErrors(errors);
+      setMessage({ type: "error", text: "Please fix the validation errors" });
+      setIsLoading(false);
+      return;
+    }
 
     try {
       // Upload image first if a new one is selected
@@ -333,10 +365,13 @@ export default function ProfilePage() {
                       placeholder="John Doe"
                       value={formData.name}
                       onChange={handleChange}
-                      className="pl-10 ivy-font"
+                      className={`pl-10 ivy-font ${fieldErrors.name ? 'border-red-500' : ''}`}
                       required
                     />
                   </div>
+                  {fieldErrors.name && (
+                    <p className="text-xs text-red-600 dark:text-red-400">{fieldErrors.name}</p>
+                  )}
                 </div>
 
                 {/* Email (Read-only) */}
@@ -396,12 +431,17 @@ export default function ProfilePage() {
                       name="hourlyRate"
                       type="number"
                       step="0.01"
+                      min="0"
+                      max="10000"
                       placeholder="50.00"
                       value={formData.hourlyRate}
                       onChange={handleChange}
-                      className="pl-10 ivy-font"
+                      className={`pl-10 ivy-font ${fieldErrors.hourlyRate ? 'border-red-500' : ''}`}
                     />
                   </div>
+                  {fieldErrors.hourlyRate && (
+                    <p className="text-xs text-red-600 dark:text-red-400">{fieldErrors.hourlyRate}</p>
+                  )}
                   <p className="text-xs text-muted-foreground ivy-font">
                     Used for timesheet calculations
                   </p>

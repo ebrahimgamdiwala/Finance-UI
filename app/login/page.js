@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
+import { signupSchema, loginSchema } from "@/lib/validations";
 import StaggeredMenu from "@/components/StaggeredMenu";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -22,6 +23,7 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
+  const [fieldErrors, setFieldErrors] = useState({});
   const [menuBtnColor, setMenuBtnColor] = useState('#000000');
   const [formData, setFormData] = useState({
     email: "",
@@ -53,9 +55,40 @@ export default function LoginPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
+    setFieldErrors({});
     setIsLoading(true);
 
     try {
+      // Validate form data with Zod
+      const schema = isLogin ? loginSchema : signupSchema;
+      const validation = schema.safeParse(formData);
+
+      if (!validation.success) {
+        const errors = {};
+        const errorMessages = [];
+        
+        // Zod uses 'issues' not 'errors'
+        validation.error.issues.forEach((err) => {
+          const field = String(err.path[0] || 'unknown');
+          const message = err.message;
+          errors[field] = message;
+          // Create a user-friendly field name
+          const fieldName = field.charAt(0).toUpperCase() + field.slice(1).replace(/([A-Z])/g, ' $1');
+          errorMessages.push(`• ${fieldName}: ${message}`);
+        });
+        
+        setFieldErrors(errors);
+        
+        // Set error with detailed list
+        if (errorMessages.length > 0) {
+          setError(errorMessages.join('\n'));
+        } else {
+          setError('Please fix the validation errors below');
+        }
+        setIsLoading(false);
+        return;
+      }
+
       if (isLogin) {
         // Login with credentials
         const result = await signIn("credentials", {
@@ -77,18 +110,6 @@ export default function LoginPage() {
         }
       } else {
         // Sign up
-        if (formData.password !== formData.confirmPassword) {
-          setError("Passwords do not match");
-          setIsLoading(false);
-          return;
-        }
-
-        if (formData.password.length < 6) {
-          setError("Password must be at least 6 characters");
-          setIsLoading(false);
-          return;
-        }
-
         const response = await fetch("/api/auth/signup", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -158,10 +179,18 @@ export default function LoginPage() {
   };
 
   const handleChange = (e) => {
+    const { name, value } = e.target;
     setFormData({
       ...formData,
-      [e.target.name]: e.target.value
+      [name]: value
     });
+    // Clear field error when user starts typing
+    if (fieldErrors[name]) {
+      setFieldErrors({
+        ...fieldErrors,
+        [name]: undefined
+      });
+    }
   };
 
   return (
@@ -263,9 +292,13 @@ export default function LoginPage() {
           </CardHeader>
           <CardContent>
             {error && (
-              <div className="mb-4 p-3 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 flex items-center gap-2">
-                <AlertCircle className="w-4 h-4 text-red-600 dark:text-red-400" />
-                <p className="text-sm text-red-600 dark:text-red-400 ivy-font">{error}</p>
+              <div className="mb-4 p-3 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800">
+                <div className="flex items-start gap-2">
+                  <AlertCircle className="w-4 h-4 text-red-600 dark:text-red-400 mt-0.5 flex-shrink-0" />
+                  <div className="text-sm text-red-600 dark:text-red-400 ivy-font whitespace-pre-line">
+                    {error}
+                  </div>
+                </div>
               </div>
             )}
             
@@ -283,8 +316,11 @@ export default function LoginPage() {
                       value={formData.name}
                       onChange={handleChange}
                       required={!isLogin}
-                      className="ivy-font"
+                      className={`ivy-font ${fieldErrors.name ? 'border-red-500' : ''}`}
                     />
+                    {fieldErrors.name && (
+                      <p className="text-xs text-red-600 dark:text-red-400">{fieldErrors.name}</p>
+                    )}
                   </div>
 
                   {/* Role Selection */}
@@ -298,7 +334,7 @@ export default function LoginPage() {
                         value={formData.role}
                         onChange={handleChange}
                         required={!isLogin}
-                        className="flex h-10 w-full rounded-md border border-input bg-background pl-10 pr-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ivy-font"
+                        className={`flex h-10 w-full rounded-md border border-input bg-background pl-10 pr-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ivy-font ${fieldErrors.role ? 'border-red-500' : ''}`}
                       >
                         <option value="TEAM_MEMBER">Team Member</option>
                         <option value="PROJECT_MANAGER">Project Manager</option>
@@ -307,6 +343,9 @@ export default function LoginPage() {
                         <option value="ADMIN">Admin</option>
                       </select>
                     </div>
+                    {fieldErrors.role && (
+                      <p className="text-xs text-red-600 dark:text-red-400">{fieldErrors.role}</p>
+                    )}
                     <p className="text-xs text-muted-foreground ivy-font">
                       Select your role in the organization
                     </p>
@@ -326,10 +365,13 @@ export default function LoginPage() {
                     placeholder="john@example.com"
                     value={formData.email}
                     onChange={handleChange}
-                    className="pl-10 ivy-font"
+                    className={`pl-10 ivy-font ${fieldErrors.email ? 'border-red-500' : ''}`}
                     required
                   />
                 </div>
+                {fieldErrors.email && (
+                  <p className="text-xs text-red-600 dark:text-red-400">{fieldErrors.email}</p>
+                )}
               </div>
 
               {/* Password field */}
@@ -344,7 +386,7 @@ export default function LoginPage() {
                     placeholder="••••••••"
                     value={formData.password}
                     onChange={handleChange}
-                    className="pl-10 pr-10 ivy-font"
+                    className={`pl-10 pr-10 ivy-font ${fieldErrors.password ? 'border-red-500' : ''}`}
                     required
                   />
                   <button
@@ -355,6 +397,9 @@ export default function LoginPage() {
                     {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
                 </div>
+                {fieldErrors.password && (
+                  <p className="text-xs text-red-600 dark:text-red-400">{fieldErrors.password}</p>
+                )}
               </div>
 
               {/* Confirm Password - only for signup */}
@@ -370,10 +415,13 @@ export default function LoginPage() {
                       placeholder="••••••••"
                       value={formData.confirmPassword}
                       onChange={handleChange}
-                      className="pl-10 ivy-font"
+                      className={`pl-10 ivy-font ${fieldErrors.confirmPassword ? 'border-red-500' : ''}`}
                       required={!isLogin}
                     />
                   </div>
+                  {fieldErrors.confirmPassword && (
+                    <p className="text-xs text-red-600 dark:text-red-400">{fieldErrors.confirmPassword}</p>
+                  )}
                 </div>
               )}
 
@@ -440,6 +488,7 @@ export default function LoginPage() {
                   onClick={() => {
                     setIsLogin(!isLogin);
                     setError("");
+                    setFieldErrors({});
                     setFormData({
                       email: "",
                       password: "",
