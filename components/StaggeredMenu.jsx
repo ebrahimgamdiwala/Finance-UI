@@ -2,6 +2,8 @@ import React, { useCallback, useLayoutEffect, useRef, useState } from 'react';
 import { gsap } from 'gsap';
 import Link from 'next/link';
 import ThemeToggle from '@/components/ThemeToggle';
+import UserNav from '@/components/UserNav';
+import { useSession } from 'next-auth/react';
 
 export const StaggeredMenu = ({
   position = 'right',
@@ -22,6 +24,7 @@ export const StaggeredMenu = ({
 }) => {
   const [open, setOpen] = useState(false);
   const openRef = useRef(false);
+  const { data: session } = useSession();
 
   const panelRef = useRef(null);
   const preLayersRef = useRef(null);
@@ -505,7 +508,15 @@ export const StaggeredMenu = ({
               )}
             </ul>
 
-            {displaySocials && socialItems && socialItems.length > 0 && (
+            {/* User Profile Section - Only show when logged in */}
+            {session?.user && (
+              <div className="sm-user-profile mt-auto pt-6 pb-4 border-t border-slate-200 dark:border-slate-700">
+                <UserNav />
+              </div>
+            )}
+
+            {/* Social Links - Only show when NOT logged in */}
+            {!session?.user && displaySocials && socialItems && socialItems.length > 0 && (
               <div
                 className="sm-socials mt-auto pt-8 flex flex-col gap-3"
                 aria-label="Social links">

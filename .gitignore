@@ -36,6 +36,15 @@ yarn-error.log*
 .env.local
 .env.*.local
 
+# GCP service account key
+service-account-key.json
+*.json
+!package.json
+!package-lock.json
+!tsconfig.json
+!jsconfig.json
+!components.json
+
 # vercel
 .vercel
 

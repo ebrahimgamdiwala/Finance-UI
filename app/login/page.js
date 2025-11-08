@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { signIn } from "next-auth/react";
 import StaggeredMenu from "@/components/StaggeredMenu";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -11,18 +13,22 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { 
   Mail, Lock, Eye, EyeOff, Sparkles, TrendingUp, 
-  Shield, Github, Chrome 
+  Shield, Chrome, AlertCircle, Loader2, UserCircle
 } from "lucide-react";
 
 export default function LoginPage() {
+  const router = useRouter();
   const [isLogin, setIsLogin] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
   const [menuBtnColor, setMenuBtnColor] = useState('#000000');
   const [formData, setFormData] = useState({
     email: "",
     password: "",
     confirmPassword: "",
-    name: ""
+    name: "",
+    role: "TEAM_MEMBER" // Default role
   });
 
   useEffect(() => {
@@ -44,10 +50,90 @@ export default function LoginPage() {
     return () => observer.disconnect();
   }, []);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Handle form submission
-    console.log("Form submitted:", formData);
+    setError("");
+    setIsLoading(true);
+
+    try {
+      if (isLogin) {
+        // Login with credentials
+        const result = await signIn("credentials", {
+          redirect: false,
+          email: formData.email,
+          password: formData.password,
+        });
+
+        if (result?.error) {
+          setError("Invalid email or password");
+        } else {
+          // Redirect to dashboard on success
+          router.push("/dashboard");
+          router.refresh();
+        }
+      } else {
+        // Sign up
+        if (formData.password !== formData.confirmPassword) {
+          setError("Passwords do not match");
+          setIsLoading(false);
+          return;
+        }
+
+        if (formData.password.length < 6) {
+          setError("Password must be at least 6 characters");
+          setIsLoading(false);
+          return;
+        }
+
+        const response = await fetch("/api/auth/signup", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            email: formData.email,
+            password: formData.password,
+            name: formData.name,
+            role: formData.role,
+          }),
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+          // Auto login after signup
+          const result = await signIn("credentials", {
+            redirect: false,
+            email: formData.email,
+            password: formData.password,
+          });
+
+          if (result?.error) {
+            setError("Account created but login failed. Please try logging in.");
+          } else {
+            router.push("/dashboard");
+            router.refresh();
+          }
+        } else {
+          setError(data.error || "Failed to create account");
+        }
+      }
+    } catch (error) {
+      console.error("Auth error:", error);
+      setError("An unexpected error occurred");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleGoogleSignIn = async () => {
+    setIsLoading(true);
+    setError("");
+    try {
+      await signIn("google", { callbackUrl: "/dashboard" });
+    } catch (error) {
+      console.error("Google sign in error:", error);
+      setError("Failed to sign in with Google");
+      setIsLoading(false);
+    }
   };
 
   const handleChange = (e) => {
@@ -155,22 +241,56 @@ export default function LoginPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
+            {error && (
+              <div className="mb-4 p-3 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 text-red-600 dark:text-red-400" />
+                <p className="text-sm text-red-600 dark:text-red-400 ivy-font">{error}</p>
+              </div>
+            )}
+            
             <form onSubmit={handleSubmit} className="space-y-4">
               {/* Name field - only for signup */}
               {!isLogin && (
-                <div className="space-y-2">
-                  <Label htmlFor="name" className="ivy-font">Full Name</Label>
-                  <Input
-                    id="name"
-                    name="name"
-                    type="text"
-                    placeholder="John Doe"
-                    value={formData.name}
-                    onChange={handleChange}
-                    required={!isLogin}
-                    className="ivy-font"
-                  />
-                </div>
+                <>
+                  <div className="space-y-2">
+                    <Label htmlFor="name" className="ivy-font">Full Name</Label>
+                    <Input
+                      id="name"
+                      name="name"
+                      type="text"
+                      placeholder="John Doe"
+                      value={formData.name}
+                      onChange={handleChange}
+                      required={!isLogin}
+                      className="ivy-font"
+                    />
+                  </div>
+
+                  {/* Role Selection */}
+                  <div className="space-y-2">
+                    <Label htmlFor="role" className="ivy-font">Role</Label>
+                    <div className="relative">
+                      <UserCircle className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                      <select
+                        id="role"
+                        name="role"
+                        value={formData.role}
+                        onChange={handleChange}
+                        required={!isLogin}
+                        className="flex h-10 w-full rounded-md border border-input bg-background pl-10 pr-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ivy-font"
+                      >
+                        <option value="TEAM_MEMBER">Team Member</option>
+                        <option value="PROJECT_MANAGER">Project Manager</option>
+                        <option value="SALES">Sales</option>
+                        <option value="FINANCE">Finance</option>
+                        <option value="ADMIN">Admin</option>
+                      </select>
+                    </div>
+                    <p className="text-xs text-muted-foreground ivy-font">
+                      Select your role in the organization
+                    </p>
+                  </div>
+                </>
               )}
 
               {/* Email field */}
@@ -253,8 +373,16 @@ export default function LoginPage() {
                 type="submit" 
                 className="w-full bg-emerald-500 hover:bg-emerald-600 text-white ivy-font"
                 size="lg"
+                disabled={isLoading}
               >
-                {isLogin ? "Sign In" : "Create Account"}
+                {isLoading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    {isLogin ? "Signing in..." : "Creating account..."}
+                  </>
+                ) : (
+                  isLogin ? "Sign In" : "Create Account"
+                )}
               </Button>
 
               {/* Divider */}
@@ -266,21 +394,19 @@ export default function LoginPage() {
               </div>
 
               {/* Social Login */}
-              <div className="grid grid-cols-2 gap-3">
-                <Button 
-                  type="button" 
-                  variant="outline" 
-                  className="ivy-font"
-                >
-                  <Github className="w-4 h-4 mr-2" />
-                  GitHub
-                </Button>
+              <div className="grid grid-cols-1 gap-3">
                 <Button 
                   type="button" 
                   variant="outline"
-                  className="ivy-font"
+                  className="ivy-font w-full"
+                  onClick={handleGoogleSignIn}
+                  disabled={isLoading}
                 >
-                  <Chrome className="w-4 h-4 mr-2" />
+                  {isLoading ? (
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  ) : (
+                    <Chrome className="w-4 h-4 mr-2" />
+                  )}
                   Google
                 </Button>
               </div>
@@ -290,8 +416,19 @@ export default function LoginPage() {
                 {isLogin ? "Don't have an account? " : "Already have an account? "}
                 <button
                   type="button"
-                  onClick={() => setIsLogin(!isLogin)}
+                  onClick={() => {
+                    setIsLogin(!isLogin);
+                    setError("");
+                    setFormData({
+                      email: "",
+                      password: "",
+                      confirmPassword: "",
+                      name: "",
+                      role: "TEAM_MEMBER"
+                    });
+                  }}
                   className="text-emerald-600 hover:text-emerald-700 dark:text-emerald-400 dark:hover:text-emerald-300 font-medium"
+                  disabled={isLoading}
                 >
                   {isLogin ? "Sign up" : "Sign in"}
                 </button>
