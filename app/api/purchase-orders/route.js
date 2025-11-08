@@ -47,6 +47,35 @@ export async function GET(req) {
             id: true,
             name: true,
             code: true,
+            manager: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+              },
+            },
+          },
+        },
+        requestedBy: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
+        approvedBy: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
+        linkedSalesOrder: {
+          select: {
+            id: true,
+            number: true,
+            total: true,
+            status: true,
           },
         },
         lines: {
@@ -96,6 +125,8 @@ export async function POST(req) {
     );
   }
   
+  const { user } = authResult;
+  
   try {
     const body = await req.json();
     const {
@@ -106,13 +137,25 @@ export async function POST(req) {
       expectedDate,
       status,
       currency,
+      note,
       lines,
+      subtotal,
+      taxTotal,
+      total,
     } = body;
     
     // Validate required fields
-    if (!number || !partnerId) {
+    if (!number) {
       return NextResponse.json(
-        { error: 'Purchase order number and partner are required' },
+        { error: 'Purchase order number is required' },
+        { status: 400 }
+      );
+    }
+    
+    // For requests (PENDING_APPROVAL), only projectId is required
+    if (status !== 'PENDING_APPROVAL' && !partnerId) {
+      return NextResponse.json(
+        { error: 'Vendor is required for purchase orders' },
         { status: 400 }
       );
     }
@@ -129,36 +172,31 @@ export async function POST(req) {
       );
     }
     
-    // Calculate totals
-    let subtotal = 0;
-    let taxTotal = 0;
+    // Build purchase order data
+    const purchaseOrderData = {
+      number,
+      partnerId: partnerId || null,
+      projectId: projectId || null,
+      date: date ? new Date(date) : new Date(),
+      expectedDate: expectedDate ? new Date(expectedDate) : null,
+      status: status || 'DRAFT',
+      currency: currency || 'INR',
+      note: note || null,
+      subtotal: parseFloat(subtotal) || 0,
+      taxTotal: parseFloat(taxTotal) || 0,
+      total: parseFloat(total) || 0,
+    };
     
-    if (lines && lines.length > 0) {
-      lines.forEach(line => {
-        const lineAmount = parseFloat(line.amount) || 0;
-        subtotal += lineAmount;
-        
-        if (line.taxPercent) {
-          taxTotal += (lineAmount * parseFloat(line.taxPercent)) / 100;
-        }
-      });
+    // If creating a request, add approval workflow fields
+    if (status === 'PENDING_APPROVAL') {
+      purchaseOrderData.requestedById = user.id;
+      purchaseOrderData.requestedAt = new Date();
     }
     
-    const total = subtotal + taxTotal;
-    
-    // Create purchase order with lines
+    // Create purchase order with lines and activity log
     const purchaseOrder = await prisma.purchaseOrder.create({
       data: {
-        number,
-        partnerId,
-        projectId: projectId || null,
-        date: date ? new Date(date) : new Date(),
-        expectedDate: expectedDate ? new Date(expectedDate) : null,
-        status: status || 'DRAFT',
-        currency: currency || 'INR',
-        subtotal,
-        taxTotal,
-        total,
+        ...purchaseOrderData,
         lines: lines && lines.length > 0 ? {
           create: lines.map(line => ({
             productId: line.productId || null,
@@ -170,13 +208,50 @@ export async function POST(req) {
             amount: parseFloat(line.amount),
           })),
         } : undefined,
+        activities: {
+          create: {
+            userId: user.id,
+            action: 'CREATED',
+            comment: `Purchase order ${number} created`,
+            metadata: {
+              total: parseFloat(total) || 0,
+              status: status || 'DRAFT',
+            },
+          },
+        },
       },
       include: {
         partner: true,
         project: true,
+        requestedBy: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
+        approvedBy: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
         lines: {
           include: {
             product: true,
+          },
+        },
+        activities: {
+          include: {
+            user: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+                role: true,
+              },
+            },
           },
         },
       },

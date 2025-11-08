@@ -88,6 +88,11 @@ model User {
   // Sales Order approval workflow
   requestedSalesOrders SalesOrder[] @relation("SalesOrderRequester")
   approvedSalesOrders  SalesOrder[] @relation("SalesOrderApprover")
+  
+  // Purchase Order approval workflow
+  requestedPurchaseOrders PurchaseOrder[] @relation("PORequestedBy")
+  approvedPurchaseOrders  PurchaseOrder[] @relation("POApprovedBy")
+  purchaseOrderActivities PurchaseOrderActivity[]
 }
 
 model Partner {
@@ -318,6 +323,7 @@ model SalesOrder {
 
   lines       SalesOrderLine[]
   invoices    CustomerInvoice[] @relation("SO_Invoice")
+  linkedPurchaseOrders PurchaseOrder[] @relation("PO_SO_Link")
 
   @@index([partnerId])
   @@index([projectId])
@@ -399,18 +405,37 @@ model PurchaseOrder {
   expectedDate DateTime?
   status      DocumentStatus @default(DRAFT)
   currency    String      @default("INR")
+  note        String?
   subtotal    Decimal     @db.Decimal(12,2) @default(0.00)
   taxTotal    Decimal     @db.Decimal(12,2) @default(0.00)
   total       Decimal     @db.Decimal(12,2) @default(0.00)
+  
+  // Approval workflow fields
+  requestedById String?
+  requestedBy   User?      @relation("PORequestedBy", fields: [requestedById], references: [id], onDelete: SetNull)
+  approvedById  String?
+  approvedBy    User?      @relation("POApprovedBy", fields: [approvedById], references: [id], onDelete: SetNull)
+  approvalNote  String?
+  requestedAt   DateTime?
+  approvedAt    DateTime?
+  
+  // Link to Sales Order for matching
+  linkedSalesOrderId String?
+  linkedSalesOrder   SalesOrder? @relation("PO_SO_Link", fields: [linkedSalesOrderId], references: [id], onDelete: SetNull)
+  
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt
 
   lines       PurchaseOrderLine[]
   vendorBills VendorBill[] @relation("PO_VendorBill")
+  activities  PurchaseOrderActivity[]
 
   @@index([partnerId])
   @@index([projectId])
   @@index([status])
+  @@index([requestedById])
+  @@index([approvedById])
+  @@index([linkedSalesOrderId])
 }
 
 model PurchaseOrderLine {
@@ -427,6 +452,24 @@ model PurchaseOrderLine {
   amount        Decimal  @db.Decimal(12,2)
 
   @@index([purchaseOrderId])
+}
+
+// Purchase Order Activity Log for Sales tracking
+model PurchaseOrderActivity {
+  id              String   @id @default(uuid())
+  purchaseOrder   PurchaseOrder @relation(fields: [purchaseOrderId], references: [id], onDelete: Cascade)
+  purchaseOrderId String
+  user            User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  userId          String?
+  action          String   // "CREATED", "APPROVED", "REJECTED", "TAGGED", "COMMENTED"
+  comment         String?
+  tags            String[] // Array of tags like ["URGENT", "REVIEWED", "FOLLOW_UP"]
+  metadata        Json?    // Additional data
+  createdAt       DateTime @default(now())
+
+  @@index([purchaseOrderId])
+  @@index([userId])
+  @@index([createdAt])
 }
 
 model VendorBill {

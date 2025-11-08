@@ -17,6 +17,7 @@ import {
   CreditCard,
   Wallet,
   BarChart3,
+  Activity,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -34,6 +35,7 @@ const NAV_ITEMS = {
   PROJECT_MANAGER: [
     { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
     { label: "Projects", href: "/dashboard/projects", icon: FolderKanban },
+    { label: "Purchase Orders", href: "/dashboard/purchase-orders", icon: ShoppingCart },
     { label: "My Tasks", href: "/dashboard/tasks", icon: FileText },
     { label: "Analytics", href: "/dashboard/analytics", icon: BarChart3 },
   ],
@@ -47,6 +49,7 @@ const NAV_ITEMS = {
   SALES: [
     { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
     { label: "Sales Orders", href: "/dashboard/sales-orders", icon: ShoppingCart },
+    { label: "Activity Logs", href: "/dashboard/sales-orders/activities", icon: Activity },
     { label: "Invoices", href: "/dashboard/invoices", icon: Receipt },
     { label: "Analytics", href: "/dashboard/analytics", icon: BarChart3 },
   ],
