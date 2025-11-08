@@ -402,17 +402,16 @@ export const StaggeredMenu = ({
           className="staggered-menu-header absolute top-0 left-0 w-full flex items-center justify-between p-[2em] bg-transparent pointer-events-none z-20"
           aria-label="Main navigation header">
           <div className="flex items-center gap-3 pointer-events-auto">
-            <div
-              className="sm-logo flex items-center select-none"
-              aria-label="Logo">
+            <Link href="/dashboard" className="sm-logo flex items-center select-none" aria-label="OneFlow Logo">
               <img
-                src={logoUrl || '/src/assets/logos/reactbits-gh-white.svg'}
-                alt="Logo"
-                className="sm-logo-img block h-8 w-auto object-contain"
+                src="/one-flow.svg"
+                alt="OneFlow"
+                className="sm-logo-img block h-8 w-auto object-contain dark:invert"
                 draggable={false}
-                width={110}
-                height={24} />
-            </div>
+                width={32}
+                height={32} />
+              <span className="ml-2 text-xl font-bold text-foreground">OneFlow</span>
+            </Link>
             {/* Dark mode toggle */}
             <ThemeToggle />
           </div>
