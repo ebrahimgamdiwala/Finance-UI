@@ -70,7 +70,7 @@ export default function AdminDashboard({ user }) {
     }
   };
 
-  const profit = stats.totalRevenue - stats.totalCost;
+  const profit = (stats.totalRevenue || 0) - (stats.totalCost || 0);
   const profitMargin = stats.totalRevenue > 0 
     ? ((profit / stats.totalRevenue) * 100).toFixed(1) 
     : 0;
@@ -137,7 +137,7 @@ export default function AdminDashboard({ user }) {
             <TrendingUp className="h-4 w-4 text-green-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">₹{stats.totalRevenue.toLocaleString()}</div>
+            <div className="text-2xl font-bold">₹{(stats.totalRevenue || 0).toLocaleString()}</div>
             <p className="text-xs text-muted-foreground">From all projects</p>
           </CardContent>
         </Card>
@@ -149,7 +149,7 @@ export default function AdminDashboard({ user }) {
           </CardHeader>
           <CardContent>
             <div className={`text-2xl font-bold ${profit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-              ₹{profit.toLocaleString()}
+              ₹{(profit || 0).toLocaleString()}
             </div>
             <p className="text-xs text-muted-foreground">{profitMargin}% margin</p>
           </CardContent>
@@ -168,7 +168,7 @@ export default function AdminDashboard({ user }) {
               <div className="flex items-center justify-between text-sm">
                 <span className="text-muted-foreground">Revenue</span>
                 <span className="font-semibold text-green-600">
-                  ₹{stats.totalRevenue.toLocaleString()}
+                  ₹{(stats.totalRevenue || 0).toLocaleString()}
                 </span>
               </div>
               <Progress 
@@ -181,7 +181,7 @@ export default function AdminDashboard({ user }) {
               <div className="flex items-center justify-between text-sm">
                 <span className="text-muted-foreground">Cost</span>
                 <span className="font-semibold text-red-600">
-                  ₹{stats.totalCost.toLocaleString()}
+                  ₹{(stats.totalCost || 0).toLocaleString()}
                 </span>
               </div>
               <Progress 

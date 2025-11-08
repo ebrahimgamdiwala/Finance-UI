@@ -54,8 +54,8 @@ export default function TeamMemberDashboard({ user }) {
       const timesheetsRes = await fetch("/api/timesheets?userId=" + user.id);
       if (timesheetsRes.ok) {
         const timesheets = await timesheetsRes.json();
-        const totalHours = timesheets.reduce((sum, t) => sum + (t.hours || 0), 0);
-        setStats((prev) => ({ ...prev, hoursLogged: totalHours }));
+        const totalHours = timesheets.reduce((sum, t) => sum + (parseFloat(t.hours) || 0), 0);
+        setStats((prev) => ({ ...prev, hoursLogged: Number(totalHours) || 0 }));
         setRecentTimesheets(timesheets.slice(0, 5));
       }
 
@@ -63,7 +63,7 @@ export default function TeamMemberDashboard({ user }) {
       const expensesRes = await fetch("/api/expenses?userId=" + user.id);
       if (expensesRes.ok) {
         const expenses = await expensesRes.json();
-        const pending = expenses.filter((e) => e.status === "PENDING").length;
+        const pending = expenses.filter((e) => !e.approved).length;
         setStats((prev) => ({ ...prev, pendingExpenses: pending }));
       }
     } catch (error) {
@@ -164,7 +164,7 @@ export default function TeamMemberDashboard({ user }) {
             <Timer className="h-4 w-4 text-blue-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.hoursLogged.toFixed(1)}h</div>
+            <div className="text-2xl font-bold">{Number(stats.hoursLogged || 0).toFixed(1)}h</div>
             <p className="text-xs text-muted-foreground">This month</p>
           </CardContent>
         </Card>
