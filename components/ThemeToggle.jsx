@@ -6,20 +6,23 @@ const STORAGE_KEY = "theme";
 
 export default function ThemeToggle({ className = "" }) {
   const [mounted, setMounted] = useState(false);
-  const [theme, setTheme] = useState("light");
+  const [theme, setTheme] = useState(() => {
+    // Initialize theme from localStorage or system preference
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) return saved;
+      return window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+    }
+    return "light";
+  });
 
   useEffect(() => {
     // Delay mounting to avoid hydration mismatch
     const timer = setTimeout(() => setMounted(true), 0);
-    const saved = localStorage.getItem(STORAGE_KEY);
-    let initial = saved;
-    if (!initial) {
-      initial = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
-    }
-    setTheme(initial);
-    document.documentElement.classList.toggle("dark", initial === "dark");
+    // Apply theme class on mount
+    document.documentElement.classList.toggle("dark", theme === "dark");
     return () => clearTimeout(timer);
-  }, []);
+  }, [theme]);
 
   const toggle = () => {
     const next = theme === "dark" ? "light" : "dark";

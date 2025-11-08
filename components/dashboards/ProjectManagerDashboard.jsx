@@ -172,7 +172,7 @@ export default function ProjectManagerDashboard({ user }) {
           <div className="flex items-center justify-between">
             <div>
               <CardTitle>Your Projects</CardTitle>
-              <CardDescription>Projects you're managing</CardDescription>
+              <CardDescription>Projects you&apos;re managing</CardDescription>
             </div>
             <Button
               variant="outline"

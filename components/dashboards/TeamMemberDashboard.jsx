@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -33,9 +33,9 @@ export default function TeamMemberDashboard({ user }) {
 
   useEffect(() => {
     fetchDashboardData();
-  }, []);
+  }, [fetchDashboardData]);
 
-  const fetchDashboardData = async () => {
+  const fetchDashboardData = useCallback(async () => {
     try {
       // Fetch my tasks
       const tasksRes = await fetch("/api/tasks?myTasks=true");
@@ -71,7 +71,7 @@ export default function TeamMemberDashboard({ user }) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user.id]);
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -118,7 +118,7 @@ export default function TeamMemberDashboard({ user }) {
         <div>
           <h1 className="text-3xl font-bold">Welcome back, {user.name}!</h1>
           <p className="text-muted-foreground mt-1">
-            Here's what's happening with your work today.
+            Here&apos;s what&apos;s happening with your work today.
           </p>
         </div>
         <Button onClick={() => router.push("/dashboard/tasks")}>

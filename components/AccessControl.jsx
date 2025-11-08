@@ -45,14 +45,14 @@ export function withPageAccess(Component, requiredPage) {
                 Access Denied
               </CardTitle>
               <CardDescription>
-                You don't have permission to access this page.
+                <p className="text-muted-foreground">You don&apos;t have permission to access this page.</p>
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <p className="text-sm text-muted-foreground">
-                This page requires specific permissions that your current role ({session.user.role}) doesn't have.
-                Please contact your administrator if you believe this is an error.
+                This page requires specific permissions that your current role ({session.user.role}) doesn&apos;t have.
               </p>
+              <p className="text-muted-foreground">Please contact your administrator if you believe you should have access to this page.</p>
               <div className="flex gap-2">
                 <Button
                   variant="outline"

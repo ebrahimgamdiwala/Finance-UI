@@ -8,20 +8,16 @@ import RoleSelectionModal from "@/components/RoleSelectionModal";
 export default function RoleSetupPage() {
   const { data: session, status, update } = useSession();
   const router = useRouter();
-  const [showModal, setShowModal] = useState(false);
+  // Determine initial modal state based on session
+  const shouldShowModal = status === "authenticated" && !session?.user?.role;
+  const [showModal, setShowModal] = useState(shouldShowModal);
 
   useEffect(() => {
     if (status === "unauthenticated") {
       router.push("/login");
-    } else if (status === "authenticated") {
-      // Only show modal for users who don't have a role set yet (new OAuth users)
-      // Don't show for existing users with TEAM_MEMBER role
-      if (!session?.user?.role) {
-        setShowModal(true);
-      } else {
-        // User already has a role (including TEAM_MEMBER), redirect to dashboard
-        router.push("/dashboard");
-      }
+    } else if (status === "authenticated" && session?.user?.role) {
+      // User already has a role (including TEAM_MEMBER), redirect to dashboard
+      router.push("/dashboard");
     }
   }, [status, session, router]);
 

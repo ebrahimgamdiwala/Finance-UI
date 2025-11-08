@@ -11,6 +11,19 @@ export default function ImageCarousel({ images = [], className, autoPlay = true,
   const [isPaused, setIsPaused] = useState(false);
   const timeoutRef = useRef(null);
 
+  // Define navigation functions before early return
+  const goToNext = (e, isAuto = false) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    if (isTransitioning) return;
+    
+    setIsTransitioning(true);
+    setCurrentIndex((prevIndex) => (prevIndex + 1) % images.length);
+    setTimeout(() => setIsTransitioning(false), 300);
+  };
+
   if (!images || images.length === 0) {
     return null;
   }
@@ -44,19 +57,6 @@ export default function ImageCarousel({ images = [], className, autoPlay = true,
     setTimeout(() => setIsTransitioning(false), 300);
   };
 
-  const goToNext = (e, isAuto = false) => {
-    if (e) {
-      e.preventDefault();
-      e.stopPropagation();
-    }
-    if (isTransitioning) return;
-    
-    setIsTransitioning(true);
-    setCurrentIndex((prevIndex) =>
-      prevIndex === images.length - 1 ? 0 : prevIndex + 1
-    );
-    setTimeout(() => setIsTransitioning(false), 300);
-  };
 
   const goToSlide = (index, e) => {
     e.preventDefault();

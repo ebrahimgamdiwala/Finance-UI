@@ -43,8 +43,9 @@ export default function Home() {
   // Force remount ModelViewer when returning to home page
   useEffect(() => {
     if (pathname === '/') {
-      // Use timestamp to force complete remount
-      setModelKey(Date.now());
+      // Use timestamp to force complete remount after a small delay
+      const timer = setTimeout(() => setModelKey(Date.now()), 0);
+      return () => clearTimeout(timer);
     }
   }, [pathname]);
 

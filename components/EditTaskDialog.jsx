@@ -279,7 +279,7 @@ export default function EditTaskDialog({ isOpen, onClose, task, onTaskUpdated, c
           <DialogHeader>
             <DialogTitle>Access Denied</DialogTitle>
             <DialogDescription>
-              You don't have permission to edit this task.
+              You don&apos;t have permission to edit this task.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
