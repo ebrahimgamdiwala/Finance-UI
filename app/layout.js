@@ -14,8 +14,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata = {
-  title: "Finance UI - Smart Finance, Clear Insights",
-  description: "Track spending, forecast cashflow, and make data-driven decisions",
+  title: "OneFlow - Plan to Bill in One Place",
+  description: "Modular Project Management ERP. Manage projects from planning to execution to billing—track tasks, hours, and financials with real-time profitability insights.",
 };
 
 export default function RootLayout({ children }) {

@@ -9,8 +9,8 @@ import Footer from "@/components/Footer";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
-  TrendingUp, BarChart3, PieChart, Wallet, Shield, Zap,
-  Globe, Target, Sparkles, DollarSign
+  CheckCircle2, Users, Calendar, BarChart3, DollarSign, Shield, Zap,
+  Globe, Target, Sparkles, ClipboardList, Clock, TrendingUp
 } from "lucide-react";
 
 export default function Home() {
@@ -85,20 +85,20 @@ export default function Home() {
           {/* Left: Copy */}
           <div className="order-2 flex flex-col items-start md:order-1">
             <span className="mb-3 sm:mb-4 inline-flex items-center rounded-full border border-emerald-500/20 bg-emerald-500/20 backdrop-blur-sm px-2.5 sm:px-3 py-1 text-xs font-medium text-emerald-700 dark:text-emerald-300 dark:bg-emerald-500/10">
-              Smart Finance, Clear Insights
+              Plan to Bill in One Place
             </span>
             <h1 className="mb-3 sm:mb-4 text-3xl sm:text-4xl font-bold tracking-tight text-slate-900 dark:text-white lg:text-5xl xl:text-6xl">
-              Grow your wealth with
+              Manage Projects from
               <span className="ml-2 bg-linear-to-r from-emerald-500 via-teal-400 to-cyan-400 bg-clip-text text-transparent">
-                clarity
+                Planning to Billing
               </span>
             </h1>
             <p className="mb-6 sm:mb-8 max-w-xl text-base sm:text-lg leading-relaxed text-slate-700 dark:text-slate-300">
-              Track spending, forecast cashflow, and make data-driven decisions. Our real-time analytics help you stay ahead and reach your financial goals faster.
+              Plan projects, execute tasks, log hours, and track financials—all in one place. From Sales Orders to Customer Invoices, manage your entire project lifecycle seamlessly.
             </p>
             <div className="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center gap-3 sm:gap-4 w-full sm:w-auto">
               <a
-                href="#get-started"
+                href="/login"
                 className="rounded-xl bg-emerald-500 px-5 sm:px-6 py-2.5 sm:py-3 text-sm font-semibold text-white shadow-lg hover:shadow-xl shadow-emerald-500/20 hover:shadow-emerald-500/30 transition-all hover:bg-emerald-600 text-center backdrop-blur-sm"
               >
                 Get Started
@@ -118,11 +118,11 @@ export default function Home() {
             <div className="absolute -top-4 -right-4 sm:top-8 sm:right-8 z-20 animate-float">
               <div className="flex items-center gap-3 bg-gradient-to-r from-emerald-500/90 to-teal-500/90 backdrop-blur-md rounded-full px-4 py-3 shadow-xl border border-emerald-400/30">
                 <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center">
-                  <TrendingUp className="h-5 w-5 text-white" />
+                  <CheckCircle2 className="h-5 w-5 text-white" />
                 </div>
                 <div className="text-left">
-                  <p className="text-white font-semibold text-sm ivy-font">Portfolio</p>
-                  <p className="text-white/80 text-xs ivy-font">+24.5%</p>
+                  <p className="text-white font-semibold text-sm ivy-font">Tasks Done</p>
+                  <p className="text-white/80 text-xs ivy-font">12/15</p>
                 </div>
               </div>
             </div>
@@ -131,11 +131,11 @@ export default function Home() {
             <div className="absolute -bottom-4 -left-4 sm:bottom-12 sm:left-4 z-20 animate-float-delayed">
               <div className="flex items-center gap-3 bg-gradient-to-r from-blue-500/90 to-cyan-500/90 backdrop-blur-md rounded-full px-4 py-3 shadow-xl border border-blue-400/30">
                 <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center">
-                  <DollarSign className="h-5 w-5 text-white" />
+                  <TrendingUp className="h-5 w-5 text-white" />
                 </div>
                 <div className="text-left">
                   <p className="text-white font-semibold text-sm ivy-font">Revenue</p>
-                  <p className="text-white/80 text-xs ivy-font">$127.5K</p>
+                  <p className="text-white/80 text-xs ivy-font">₹1.2L</p>
                 </div>
               </div>
             </div>
@@ -166,16 +166,16 @@ export default function Home() {
           {/* Section Header */}
           <div className="text-center mb-12 sm:mb-16">
             <Badge className="mb-4 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20 border-emerald-500/20">
-              Powerful Features
+              Complete Project Management
             </Badge>
             <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-foreground mb-4">
-              Everything you need for
+              Everything for Project Success
               <span className="block mt-2 bg-linear-to-r from-emerald-500 via-teal-400 to-cyan-400 bg-clip-text text-transparent">
-                Financial Excellence
+                From Planning to Profit
               </span>
             </h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Advanced analytics, real-time insights, and intelligent automation to help you make better financial decisions
+              Manage projects, tasks, timesheets, and finances—track revenue, costs, and profit per project in real-time
             </p>
           </div>
 
@@ -197,16 +197,16 @@ export default function Home() {
               <div className="max-w-xl">
                 <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-500/20 backdrop-blur-sm border border-emerald-500/30 mb-6">
                   <Sparkles className="h-4 w-4 text-emerald-500 dark:text-emerald-400" />
-                  <span className="text-sm font-medium text-emerald-700 dark:text-emerald-300">AI-Powered Analytics</span>
+                  <span className="text-sm font-medium text-emerald-700 dark:text-emerald-300">Integrated Workflow</span>
                 </div>
                 <h3 className="text-3xl sm:text-4xl font-bold text-slate-900 dark:text-white mb-4">
-                  Smart Financial Intelligence
+                  Plan, Execute, and Bill
                 </h3>
                 <p className="text-lg text-slate-700 dark:text-slate-200 mb-6">
-                  Leverage cutting-edge AI to analyze patterns, predict trends, and get personalized recommendations for your financial goals.
+                  Link Sales Orders, Purchase Orders, Customer Invoices, and Vendor Bills—see Revenue, Cost, and Profit per project in real-time.
                 </p>
                 <button className="px-6 py-3 bg-emerald-600 hover:bg-emerald-700 dark:bg-white dark:hover:bg-slate-100 text-white dark:text-slate-900 rounded-xl font-semibold transition-all hover:scale-105 shadow-lg">
-                  Explore AI Features
+                  Explore Workflow
                 </button>
               </div>
             </div>
@@ -218,11 +218,11 @@ export default function Home() {
             <Card className="group hover:shadow-xl transition-all duration-300 hover:scale-105 border-border/40 backdrop-blur-sm bg-card/50 cursor-pointer">
               <CardHeader>
                 <div className="w-12 h-12 rounded-xl bg-emerald-500/10 flex items-center justify-center mb-4 group-hover:bg-emerald-500 transition-colors">
-                  <TrendingUp className="h-6 w-6 text-emerald-500 group-hover:text-white transition-colors" />
+                  <Target className="h-6 w-6 text-emerald-500 group-hover:text-white transition-colors" />
                 </div>
-                <CardTitle className="text-xl ivy-font">Real-Time Analytics</CardTitle>
+                <CardTitle className="text-xl ivy-font">Project Planning</CardTitle>
                 <CardDescription className="ivy-font">
-                  Monitor your financial performance with live data updates and dynamic visualizations
+                  Create projects, assign teams, set deadlines, and track progress with visual indicators
                 </CardDescription>
               </CardHeader>
             </Card>
@@ -231,11 +231,11 @@ export default function Home() {
             <Card className="group hover:shadow-xl transition-all duration-300 hover:scale-105 border-border/40 backdrop-blur-sm bg-card/50 cursor-pointer">
               <CardHeader>
                 <div className="w-12 h-12 rounded-xl bg-blue-500/10 flex items-center justify-center mb-4 group-hover:bg-blue-500 transition-colors">
-                  <BarChart3 className="h-6 w-6 text-blue-500 group-hover:text-white transition-colors" />
+                  <ClipboardList className="h-6 w-6 text-blue-500 group-hover:text-white transition-colors" />
                 </div>
-                <CardTitle className="text-xl ivy-font">Advanced Reports</CardTitle>
+                <CardTitle className="text-xl ivy-font">Task Management</CardTitle>
                 <CardDescription className="ivy-font">
-                  Generate comprehensive reports with customizable metrics and export capabilities
+                  Assign tasks, track status (New → In Progress → Blocked → Done), and manage blockers
                 </CardDescription>
               </CardHeader>
             </Card>
@@ -244,11 +244,11 @@ export default function Home() {
             <Card className="group hover:shadow-xl transition-all duration-300 hover:scale-105 border-border/40 backdrop-blur-sm bg-card/50 cursor-pointer">
               <CardHeader>
                 <div className="w-12 h-12 rounded-xl bg-purple-500/10 flex items-center justify-center mb-4 group-hover:bg-purple-500 transition-colors">
-                  <PieChart className="h-6 w-6 text-purple-500 group-hover:text-white transition-colors" />
+                  <Clock className="h-6 w-6 text-purple-500 group-hover:text-white transition-colors" />
                 </div>
-                <CardTitle className="text-xl ivy-font">Budget Planning</CardTitle>
+                <CardTitle className="text-xl ivy-font">Timesheet Tracking</CardTitle>
                 <CardDescription className="ivy-font">
-                  Create and track budgets with intelligent spending categorization and alerts
+                  Log hours worked, mark as billable/non-billable, and calculate costs with hourly rates
                 </CardDescription>
               </CardHeader>
             </Card>
@@ -257,11 +257,11 @@ export default function Home() {
             <Card className="group hover:shadow-xl transition-all duration-300 hover:scale-105 border-border/40 backdrop-blur-sm bg-card/50 cursor-pointer">
               <CardHeader>
                 <div className="w-12 h-12 rounded-xl bg-amber-500/10 flex items-center justify-center mb-4 group-hover:bg-amber-500 transition-colors">
-                  <Wallet className="h-6 w-6 text-amber-500 group-hover:text-white transition-colors" />
+                  <DollarSign className="h-6 w-6 text-amber-500 group-hover:text-white transition-colors" />
                 </div>
-                <CardTitle className="text-xl ivy-font">Portfolio Management</CardTitle>
+                <CardTitle className="text-xl ivy-font">Financial Management</CardTitle>
                 <CardDescription className="ivy-font">
-                  Track investments, analyze performance, and optimize your portfolio allocation
+                  Link Sales Orders, Purchase Orders, Invoices, and Bills—track Revenue, Cost & Profit
                 </CardDescription>
               </CardHeader>
             </Card>
@@ -270,11 +270,11 @@ export default function Home() {
             <Card className="group hover:shadow-xl transition-all duration-300 hover:scale-105 border-border/40 backdrop-blur-sm bg-card/50 cursor-pointer">
               <CardHeader>
                 <div className="w-12 h-12 rounded-xl bg-red-500/10 flex items-center justify-center mb-4 group-hover:bg-red-500 transition-colors">
-                  <Shield className="h-6 w-6 text-red-500 group-hover:text-white transition-colors" />
+                  <Users className="h-6 w-6 text-red-500 group-hover:text-white transition-colors" />
                 </div>
-                <CardTitle className="text-xl ivy-font">Bank-Level Security</CardTitle>
+                <CardTitle className="text-xl ivy-font">Team Collaboration</CardTitle>
                 <CardDescription className="ivy-font">
-                  Your data is protected with 256-bit encryption and multi-factor authentication
+                  Role-based access for Project Managers, Team Members, Sales, Finance, and Admins
                 </CardDescription>
               </CardHeader>
             </Card>
@@ -283,11 +283,11 @@ export default function Home() {
             <Card className="group hover:shadow-xl transition-all duration-300 hover:scale-105 border-border/40 backdrop-blur-sm bg-card/50 cursor-pointer">
               <CardHeader>
                 <div className="w-12 h-12 rounded-xl bg-teal-500/10 flex items-center justify-center mb-4 group-hover:bg-teal-500 transition-colors">
-                  <Globe className="h-6 w-6 text-teal-500 group-hover:text-white transition-colors" />
+                  <BarChart3 className="h-6 w-6 text-teal-500 group-hover:text-white transition-colors" />
                 </div>
-                <CardTitle className="text-xl ivy-font">Global Access</CardTitle>
+                <CardTitle className="text-xl ivy-font">Analytics & Reports</CardTitle>
                 <CardDescription className="ivy-font">
-                  Access your financial data from anywhere with cloud synchronization
+                  Real-time dashboards for project progress, resource utilization, and profitability
                 </CardDescription>
               </CardHeader>
             </Card>

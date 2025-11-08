@@ -131,8 +131,8 @@ jobs:
             --cpu=1 \
             --min-instances=0 \
             --max-instances=10 \
-            --set-env-vars="NODE_ENV=production" \
-            --set-secrets="DATABASE_URL=DATABASE_URL:latest" \
+            --set-env-vars="NODE_ENV=production,GCP_PROJECT_ID=${{ env.PROJECT_ID }},GCP_BUCKET_NAME=oneflow-storage,NEXTAUTH_URL=${{ secrets.NEXTAUTH_URL }}" \
+            --set-secrets="DATABASE_URL=DATABASE_URL:latest,NEXTAUTH_SECRET=NEXTAUTH_SECRET:latest,GCP_SERVICE_ACCOUNT_KEY=GCP_STORAGE_KEY:latest" \
             --timeout=300 \
             --concurrency=80 \
             --cpu-boost \

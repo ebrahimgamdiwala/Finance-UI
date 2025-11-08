@@ -12,15 +12,15 @@ export default function Footer() {
             <div className="flex items-center gap-2 mb-4">
               <img
                 src="/favicon.ico"
-                alt="Finance UI Logo"
+                alt="OneFlow Logo"
                 className="h-8 w-8"
               />
               <span className="text-xl font-bold text-slate-900 dark:text-white">
-                Finance UI
+                OneFlow
               </span>
             </div>
             <p className="text-sm text-slate-600 dark:text-slate-400 max-w-md">
-              Smart Finance, Clear Insights. Track spending, forecast cashflow, and make data-driven decisions with our real-time analytics platform.
+              Plan to Bill in One Place. Manage projects from planning → execution → billing. Track tasks, hours, and financials with real-time profitability insights.
             </p>
           </div>
 
@@ -32,34 +32,34 @@ export default function Footer() {
             <ul className="space-y-2">
               <li>
                 <a
-                  href="#features"
+                  href="/dashboard"
                   className="text-sm text-slate-600 transition-colors hover:text-emerald-500 dark:text-slate-400 dark:hover:text-emerald-400"
                 >
-                  Features
+                  Projects
                 </a>
               </li>
               <li>
                 <a
-                  href="#pricing"
+                  href="/dashboard"
                   className="text-sm text-slate-600 transition-colors hover:text-emerald-500 dark:text-slate-400 dark:hover:text-emerald-400"
                 >
-                  Pricing
+                  Tasks
                 </a>
               </li>
               <li>
                 <a
-                  href="#dashboard"
+                  href="/dashboard"
                   className="text-sm text-slate-600 transition-colors hover:text-emerald-500 dark:text-slate-400 dark:hover:text-emerald-400"
                 >
-                  Dashboard
+                  Analytics
                 </a>
               </li>
               <li>
                 <a
-                  href="#contact"
+                  href="/login"
                   className="text-sm text-slate-600 transition-colors hover:text-emerald-500 dark:text-slate-400 dark:hover:text-emerald-400"
                 >
-                  Contact
+                  Get Started
                 </a>
               </li>
             </ul>
@@ -111,7 +111,7 @@ export default function Footer() {
         <div className="mt-12 border-t border-slate-200/30 pt-8 dark:border-slate-800/60">
           <div className="flex flex-col items-center justify-between gap-4 sm:flex-row">
             <p className="text-sm text-slate-600 dark:text-slate-400">
-              © {currentYear} Finance UI. All rights reserved.
+              © {currentYear} OneFlow. All rights reserved.
             </p>
             <div className="flex gap-6">
               <a

@@ -1,6 +1,7 @@
 {
   "name": "oneflow",
   "version": "0.1.0",
+  "description": "OneFlow - Plan to Bill in One Place. Modular Project Management ERP system.",
   "private": true,
   "engines": {
     "node": ">=20.9.0",

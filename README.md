@@ -1,6 +1,53 @@
-# Finance-UI 💰
+# OneFlow - Plan to Bill in One Place �
 
-A modern finance management application built with Next.js 16, featuring real-time analytics, transaction tracking, and beautiful data visualizations.
+A modular Project Management system that lets a Project Manager take a project from **planning → execution → billing** in one place. Built with Next.js 16 and modern web technologies.
+
+## 📋 Overview
+
+**OneFlow** is a comprehensive Project Management ERP that integrates:
+- **Plan:** Projects, tasks, people, dates
+- **Execute:** Task board, hour logging, status updates, blockers
+- **Bill & Track Money:** Link Sales Orders, Purchase Orders, Customer Invoices, Vendor Bills, and Expenses—see Revenue, Cost, Profit per project
+
+## 🎯 Key Features
+
+### 🎨 **Project Management**
+- Create and manage projects with progress tracking
+- Assign Project Managers and Team Members
+- Set deadlines and monitor budget usage
+- Visual progress bars and status indicators
+
+### ✅ **Task Management**
+- Create task lists under projects
+- Assign users, due dates, and priorities
+- Task states: New → In Progress → Blocked → Done
+- Log hours and add comments/attachments
+
+### 💰 **Financial Integration**
+- **Sales Orders (SO)** - What the customer buys
+- **Purchase Orders (PO)** - What you buy from vendors
+- **Customer Invoices** - Your revenue
+- **Vendor Bills** - Your costs from vendors
+- **Expenses** - Team out-of-pocket, billable or not
+
+### ⏱️ **Timesheet Tracking**
+- Log working hours per task
+- Mark as billable/non-billable
+- Calculate costs with hourly rates
+- Track team productivity
+
+### 📊 **Analytics Dashboard**
+- KPI Cards: Total Projects, Tasks Completed, Hours Logged
+- Charts: Project Progress %, Resource Utilization
+- Project Cost vs Revenue analysis
+- Real-time profitability tracking
+
+## 👥 User Roles
+
+- **Admin:** Full system access
+- **Project Manager:** Create/edit projects, assign people, manage tasks, approve expenses
+- **Team Member:** View tasks, update status, log hours, submit expenses
+- **Sales/Finance:** Create/link SO/PO/Customer Invoices/Vendor Bills/Expenses
 
 ## 🚀 CI/CD Pipeline
 
@@ -24,21 +71,24 @@ This project includes a complete CI/CD pipeline that automatically deploys to Go
 
 ## 🛠️ Tech Stack
 
-- **Framework:** Next.js 16 (App Router)
+- **Framework:** Next.js 16 (App Router) with Turbopack
+- **Database:** PostgreSQL with Prisma ORM
+- **Authentication:** NextAuth.js with Google OAuth
+- **Storage:** Google Cloud Storage
 - **Styling:** TailwindCSS 4
 - **UI Components:** Radix UI + shadcn/ui
-- **Database:** PostgreSQL with Prisma ORM
 - **3D Graphics:** Three.js with React Three Fiber
-- **Charts:** Recharts
+- **Charts:** Recharts for analytics
 - **Animations:** GSAP
 
 ## 🏃 Getting Started
 
 ### Prerequisites
 
-- Node.js 18+
+- Node.js >= 20.9.0 (LTS 20.18.0 recommended)
 - PostgreSQL database
-- npm or yarn
+- npm >= 10.0.0
+- Google Cloud account (for OAuth and Storage)
 
 ### Local Development
 
@@ -104,13 +154,15 @@ Build and run with Docker:
 
 ```bash
 # Build image
-docker build -t finance-ui .
+docker build -t oneflow .
 
 # Run container
 docker run -p 8080:8080 \
   -e DATABASE_URL="your-database-url" \
   -e NODE_ENV=production \
-  finance-ui
+  -e NEXTAUTH_URL="https://your-domain.com" \
+  -e NEXTAUTH_SECRET="your-secret" \
+  oneflow
 ```
 
 ## 🌐 Deployment
@@ -134,28 +186,57 @@ See [`DEPLOYMENT.md`](./DEPLOYMENT.md) for manual deployment steps.
 ## 📁 Project Structure
 
 ```
-Finance-UI/
-├── app/                # Next.js App Router pages
-│   ├── api/           # API routes
-│   ├── dashboard/     # Dashboard pages
-│   └── ...
-├── components/         # React components
-├── lib/               # Utility functions
-├── prisma/            # Database schema
-├── public/            # Static assets
-├── __tests__/         # Test files
-├── .github/           # GitHub Actions workflows
-└── Dockerfile         # Docker configuration
+OneFlow/
+├── app/                    # Next.js App Router pages
+│   ├── api/               # API routes
+│   │   ├── auth/          # NextAuth authentication
+│   │   ├── user/          # User management
+│   │   └── upload/        # File upload handlers
+│   ├── dashboard/         # Dashboard pages
+│   │   └── profile/       # User profile management
+│   ├── login/             # Login/signup page
+│   └── assistant/         # AI assistant (future)
+├── components/            # React components
+│   ├── ui/               # shadcn/ui components
+│   ├── Footer.jsx        # Global footer
+│   ├── StaggeredMenu.jsx # Navigation menu
+│   └── UserNav.jsx       # User navigation dropdown
+├── lib/                   # Utility functions
+│   ├── auth.js           # NextAuth configuration
+│   ├── prisma.js         # Prisma client
+│   ├── storage.js        # GCP storage utility
+│   └── utils.js          # Helper functions
+├── prisma/               # Database schema and migrations
+│   └── schema.prisma     # Prisma schema
+├── public/               # Static assets
+├── .github/              # GitHub Actions workflows
+├── Dockerfile            # Docker configuration
+└── *.md                  # Documentation files
 ```
 
 ## 🔐 Environment Variables
 
-Required environment variables:
+Required environment variables (see `.env` file):
 
+**Database:**
 - `DATABASE_URL` - PostgreSQL connection string
-- `NODE_ENV` - Environment mode (development/production)
 
-See [`ENVIRONMENT.md`](./ENVIRONMENT.md) for details.
+**Authentication:**
+- `NEXTAUTH_URL` - Application URL
+- `NEXTAUTH_SECRET` - NextAuth secret key
+- `GOOGLE_CLIENT_ID` - Google OAuth client ID
+- `GOOGLE_CLIENT_SECRET` - Google OAuth client secret
+
+**Google Cloud Storage:**
+- `GCP_PROJECT_ID` - GCP project ID
+- `GCP_BUCKET_NAME` - Storage bucket name
+- `GCP_KEY_FILE` - Path to service account key (local)
+- `GCP_SERVICE_ACCOUNT_KEY` - Service account JSON (production)
+
+See documentation:
+- [`ENVIRONMENT.md`](./ENVIRONMENT.md) - Environment variables
+- [`GCP_STORAGE_SETUP.md`](./GCP_STORAGE_SETUP.md) - GCP Storage setup
+- [`PRODUCTION_SETUP.md`](./PRODUCTION_SETUP.md) - Production deployment
 
 ## 📚 Learn More
 
@@ -181,10 +262,19 @@ See [`ENVIRONMENT.md`](./ENVIRONMENT.md) for details.
 
 ## 📄 License
 
-This project is private and proprietary.
+This project is built for educational purposes as part of a hackathon challenge.
 
 ## 🆘 Support
 
-For deployment issues, see:
-- [`CICD-SETUP.md`](./CICD-SETUP.md) - Setup guide
+For setup and deployment issues, see:
+- [`QUICK_SETUP.md`](./QUICK_SETUP.md) - Quick setup reference
+- [`PRODUCTION_SETUP.md`](./PRODUCTION_SETUP.md) - Production deployment guide
+- [`GCP_STORAGE_SETUP.md`](./GCP_STORAGE_SETUP.md) - Storage configuration
+- [`NODE_VERSION_FIX.md`](./NODE_VERSION_FIX.md) - Node.js troubleshooting
+- [`CICD-SETUP.md`](./CICD-SETUP.md) - CI/CD setup guide
+- [`DEPLOYMENT.md`](./DEPLOYMENT.md) - Deployment documentation
+
+---
+
+**Built with ❤️ by the OneFlow Team**
 - [`DEPLOYMENT.md`](./DEPLOYMENT.md) - Troubleshooting section
