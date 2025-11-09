@@ -1,11 +1,16 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Clock, PieChart } from "lucide-react";
 import BillableHoursChart from "@/components/charts/BillableHoursChart";
+import { RoleGuard } from "@/components/AccessControl";
 
 export default function AnalyticsPage() {
+  const { data: session, status } = useSession();
+  const router = useRouter();
   const [stats, setStats] = useState({
     hoursLogged: 0,
     billableHours: 0,
@@ -36,7 +41,7 @@ export default function AnalyticsPage() {
     }
   };
 
-  if (loading) {
+  if (status === "loading" || loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
@@ -44,14 +49,52 @@ export default function AnalyticsPage() {
     );
   }
 
+  const userRole = session?.user?.role;
+  const userName = session?.user?.name || "User";
+
+  // Define title and description based on role
+  const getPageContent = () => {
+    switch (userRole) {
+      case "ADMIN":
+        return {
+          title: "Analytics Dashboard",
+          description: "Complete insights into all projects, teams, and performance metrics across the organization.",
+        };
+      case "PROJECT_MANAGER":
+        return {
+          title: "Project Analytics",
+          description: "Insights into your managed projects and team performance.",
+        };
+      case "TEAM_MEMBER":
+        return {
+          title: "My Analytics",
+          description: "Your personal work hours and project contributions.",
+        };
+      case "SALES":
+      case "FINANCE":
+        return {
+          title: "Analytics Dashboard",
+          description: "Insights into project metrics and performance.",
+        };
+      default:
+        return {
+          title: "Analytics Dashboard",
+          description: "Insights into your work and projects.",
+        };
+    }
+  };
+
+  const pageContent = getPageContent();
+
   return (
-    <div className="container mx-auto p-6 max-w-7xl space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold">Analytics Dashboard</h1>
-        <p className="text-muted-foreground mt-1">
-          Insights into your team's performance and project metrics.
-        </p>
-      </div>
+    <RoleGuard roles={["ADMIN", "PROJECT_MANAGER", "TEAM_MEMBER", "SALES", "FINANCE"]}>
+      <div className="container mx-auto p-6 max-w-7xl space-y-6">
+        <div>
+          <h1 className="text-3xl font-bold">{pageContent.title}</h1>
+          <p className="text-muted-foreground mt-1">
+            {pageContent.description}
+          </p>
+        </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         <Card className="border-border/40">
@@ -80,6 +123,7 @@ export default function AnalyticsPage() {
           />
         </CardContent>
       </Card>
-    </div>
+      </div>
+    </RoleGuard>
   );
 }

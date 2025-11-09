@@ -13,35 +13,54 @@ export async function GET(request) {
   }
 
   const userId = session.user.id;
+  const userRole = session.user.role;
 
   try {
-    const userProjects = await prisma.project.findMany({
-      where: {
-        OR: [
-          { managerId: userId },
-          { members: { some: { userId: userId } } },
-        ],
-      },
-      select: {
-        id: true,
-      },
-    });
+    let timesheets;
 
-    const projectIds = userProjects.map(p => p.id);
-
-    const timesheets = await prisma.timesheet.findMany({
-      where: {
-        task: {
-          projectId: {
-            in: projectIds,
-          },
+    // Admin can see all timesheets
+    if (userRole === 'ADMIN') {
+      timesheets = await prisma.timesheet.findMany({
+        select: {
+          hours: true,
+          isBillable: true,
         },
-      },
-      select: {
-        hours: true,
-        isBillable: true,
-      },
-    });
+      });
+    } else {
+      // For other users, get timesheets from their projects or their own timesheets
+      const userProjects = await prisma.project.findMany({
+        where: {
+          OR: [
+            { managerId: userId },
+            { members: { some: { userId: userId, isActive: true } } },
+          ],
+        },
+        select: {
+          id: true,
+        },
+      });
+
+      const projectIds = userProjects.map(p => p.id);
+
+      timesheets = await prisma.timesheet.findMany({
+        where: {
+          OR: [
+            { userId: userId }, // User's own timesheets
+            {
+              task: {
+                projectId: {
+                  in: projectIds,
+                },
+              },
+            },
+          ],
+        },
+        select: {
+          hours: true,
+          isBillable: true,
+        },
+      });
+    }
 
     const totalHours = timesheets.reduce((acc, ts) => acc + parseFloat(ts.hours), 0);
     const billableHours = timesheets
