@@ -24,6 +24,8 @@ export async function GET(req) {
         hourlyRate: true,
         avatarUrl: true,
         image: true,
+        isApproved: true,
+        approvedAt: true,
         createdAt: true,
         updatedAt: true,
       },

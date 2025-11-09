@@ -17,8 +17,17 @@ export default function Dashboard() {
   useEffect(() => {
     if (status === "unauthenticated") {
       router.push("/login");
+    } else if (status === "authenticated" && session?.user) {
+      // Skip approval check for ADMIN users
+      if (session.user.role === "ADMIN") {
+        return; // Admins always have access
+      }
+      // Check approval for non-admin users
+      if (!session.user.isApproved) {
+        router.push("/auth/pending-approval");
+      }
     }
-  }, [status, router]);
+  }, [status, session, router]);
 
   if (status === "loading") {
     return (

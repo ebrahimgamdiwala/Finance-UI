@@ -34,7 +34,7 @@ import {
 } from "@/components/ui/select";
 import {
   Users, UserPlus, Edit, Trash2, Search, RefreshCw,
-  Loader2, AlertTriangle, CheckCircle2, Mail, Shield,
+  Loader2, AlertTriangle, CheckCircle2, Mail, Shield, UserCheck, Clock,
 } from "lucide-react";
 
 const ROLES = [
@@ -117,6 +117,23 @@ export default function UsersPage() {
     }
   };
 
+  const handleApproveUser = async (userId) => {
+    try {
+      const res = await fetch(`/api/users/${userId}/approve`, {
+        method: 'POST',
+      });
+
+      if (res.ok) {
+        fetchUsers();
+      } else {
+        alert('Failed to approve user');
+      }
+    } catch (error) {
+      console.error('Error approving user:', error);
+      alert('Error approving user');
+    }
+  };
+
   const handleDeleteUser = async (userId) => {
     if (!confirm('Are you sure you want to delete this user? This action cannot be undone.')) {
       return;
@@ -191,7 +208,7 @@ export default function UsersPage() {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid gap-4 md:grid-cols-4">
+      <div className="grid gap-4 md:grid-cols-5">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Users</CardTitle>
@@ -199,6 +216,18 @@ export default function UsersPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{users.length}</div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Pending Approval</CardTitle>
+            <Clock className="h-4 w-4 text-yellow-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {users.filter(u => !u.isApproved).length}
+            </div>
           </CardContent>
         </Card>
 
@@ -228,12 +257,12 @@ export default function UsersPage() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Team Members</CardTitle>
-            <Users className="h-4 w-4 text-green-500" />
+            <CardTitle className="text-sm font-medium">Approved Users</CardTitle>
+            <UserCheck className="h-4 w-4 text-green-500" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {users.filter(u => u.role === 'TEAM_MEMBER').length}
+              {users.filter(u => u.isApproved).length}
             </div>
           </CardContent>
         </Card>
@@ -271,6 +300,7 @@ export default function UsersPage() {
                   <TableHead>Name</TableHead>
                   <TableHead>Email</TableHead>
                   <TableHead>Role</TableHead>
+                  <TableHead>Status</TableHead>
                   <TableHead>Hourly Rate</TableHead>
                   <TableHead>Created</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
@@ -298,6 +328,19 @@ export default function UsersPage() {
                       )}
                     </TableCell>
                     <TableCell>
+                      {user.isApproved ? (
+                        <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                          <UserCheck className="mr-1 h-3 w-3" />
+                          Approved
+                        </Badge>
+                      ) : (
+                        <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200">
+                          <Clock className="mr-1 h-3 w-3" />
+                          Pending
+                        </Badge>
+                      )}
+                    </TableCell>
+                    <TableCell>
                       {user.hourlyRate ? `₹${user.hourlyRate}/hr` : '—'}
                     </TableCell>
                     <TableCell>
@@ -305,6 +348,16 @@ export default function UsersPage() {
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex items-center justify-end gap-2">
+                        {!user.isApproved && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleApproveUser(user.id)}
+                            className="text-green-600 hover:text-green-700"
+                          >
+                            <UserCheck className="h-4 w-4" />
+                          </Button>
+                        )}
                         <Button
                           variant="ghost"
                           size="sm"
