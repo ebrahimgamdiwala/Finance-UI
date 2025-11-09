@@ -469,6 +469,10 @@ export const StaggeredMenu = ({
                     if (session?.user && it.label.toLowerCase() === 'login') {
                       return false;
                     }
+                    // Hide "Assistant" and "Features" if user is logged in
+                    if (session?.user && (it.label.toLowerCase() === 'assistant' || it.label.toLowerCase() === 'features')) {
+                      return false;
+                    }
                     return true;
                   })
                   .map((it, idx) => {
