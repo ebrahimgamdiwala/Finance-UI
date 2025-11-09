@@ -22,7 +22,10 @@ export default function NewExpensePage() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [projects, setProjects] = useState([]);
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [previewUrl, setPreviewUrl] = useState(null);
   const [formData, setFormData] = useState({
     projectId: "",
     description: "",
@@ -55,6 +58,69 @@ export default function NewExpensePage() {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
+  const handleFileChange = (e) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      // Validate file type
+      const allowedTypes = ["image/jpeg", "image/png", "image/jpg", "image/webp", "image/gif", "application/pdf"];
+      if (!allowedTypes.includes(file.type)) {
+        alert("Please select a valid file (JPEG, PNG, WebP, GIF, or PDF)");
+        return;
+      }
+
+      // Validate file size (10MB max)
+      const maxSize = 10 * 1024 * 1024;
+      if (file.size > maxSize) {
+        alert("File size must be less than 10MB");
+        return;
+      }
+
+      setSelectedFile(file);
+      
+      // Create preview for images only
+      if (file.type.startsWith('image/')) {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          setPreviewUrl(reader.result);
+        };
+        reader.readAsDataURL(file);
+      } else {
+        setPreviewUrl(null); // PDF doesn't need preview
+      }
+    }
+  };
+
+  const handleUploadReceipt = async () => {
+    if (!selectedFile) return null;
+
+    setUploading(true);
+    try {
+      const uploadFormData = new FormData();
+      uploadFormData.append("file", selectedFile);
+
+      const response = await fetch("/api/upload/receipt", {
+        method: "POST",
+        body: uploadFormData,
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setFormData((prev) => ({ ...prev, receiptUrl: data.url }));
+        return data.url;
+      } else {
+        alert(data.error || "Failed to upload receipt");
+        return null;
+      }
+    } catch (error) {
+      console.error("Upload error:", error);
+      alert("Failed to upload receipt");
+      return null;
+    } finally {
+      setUploading(false);
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -71,12 +137,27 @@ export default function NewExpensePage() {
     setLoading(true);
 
     try {
+      // Upload receipt first if selected
+      let receiptUrl = formData.receiptUrl;
+      if (selectedFile) {
+        const uploadedUrl = await handleUploadReceipt();
+        if (uploadedUrl) {
+          receiptUrl = uploadedUrl;
+        } else {
+          setLoading(false);
+          return; // Stop if upload failed
+        }
+      }
+
       const response = await fetch("/api/expenses", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({
+          ...formData,
+          receiptUrl,
+        }),
       });
 
       if (response.ok) {
@@ -197,17 +278,100 @@ export default function NewExpensePage() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="receiptUrl">Receipt URL</Label>
-              <Input
-                id="receiptUrl"
-                name="receiptUrl"
-                type="url"
-                value={formData.receiptUrl}
-                onChange={handleChange}
-                placeholder="https://..."
-              />
+              <Label>Receipt Upload</Label>
+              <div className="border-2 border-dashed border-border rounded-lg p-6">
+                {!selectedFile && !formData.receiptUrl ? (
+                  <div className="text-center">
+                    <Upload className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+                    <div className="flex flex-col items-center gap-2">
+                      <Label
+                        htmlFor="receipt-upload"
+                        className="cursor-pointer text-sm font-medium text-primary hover:underline"
+                      >
+                        Click to upload receipt
+                      </Label>
+                      <input
+                        id="receipt-upload"
+                        type="file"
+                        accept="image/jpeg,image/png,image/jpg,image/webp,image/gif,application/pdf"
+                        onChange={handleFileChange}
+                        className="hidden"
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        Images (JPEG, PNG, WebP, GIF) or PDF up to 10MB
+                      </p>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {previewUrl && (
+                      <div className="relative w-full h-48 bg-muted rounded-lg overflow-hidden">
+                        <img
+                          src={previewUrl}
+                          alt="Receipt preview"
+                          className="w-full h-full object-contain"
+                        />
+                      </div>
+                    )}
+                    {selectedFile && (
+                      <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
+                        <div className="flex items-center gap-2">
+                          <Upload className="h-4 w-4 text-muted-foreground" />
+                          <span className="text-sm font-medium">{selectedFile.name}</span>
+                          <span className="text-xs text-muted-foreground">
+                            ({(selectedFile.size / 1024).toFixed(1)} KB)
+                          </span>
+                        </div>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            setSelectedFile(null);
+                            setPreviewUrl(null);
+                            setFormData((prev) => ({ ...prev, receiptUrl: "" }));
+                          }}
+                        >
+                          Remove
+                        </Button>
+                      </div>
+                    )}
+                    {formData.receiptUrl && !selectedFile && (
+                      <div className="flex items-center justify-between p-3 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800">
+                        <div className="flex items-center gap-2">
+                          <Upload className="h-4 w-4 text-green-600" />
+                          <span className="text-sm font-medium text-green-600">Receipt uploaded</span>
+                        </div>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            setFormData((prev) => ({ ...prev, receiptUrl: "" }));
+                          }}
+                        >
+                          Remove
+                        </Button>
+                      </div>
+                    )}
+                    <Label
+                      htmlFor="receipt-upload-new"
+                      className="cursor-pointer text-sm text-primary hover:underline inline-block"
+                    >
+                      Upload different file
+                    </Label>
+                    <input
+                      id="receipt-upload-new"
+                      type="file"
+                      accept="image/jpeg,image/png,image/jpg,image/webp,image/gif,application/pdf"
+                      onChange={handleFileChange}
+                      className="hidden"
+                    />
+                  </div>
+                )}
+              </div>
               <p className="text-xs text-muted-foreground">
-                Upload your receipt to cloud storage and paste the link here
+                Upload a photo or PDF of your receipt for reimbursement
               </p>
             </div>
 
@@ -244,11 +408,11 @@ export default function NewExpensePage() {
           >
             Cancel
           </Button>
-          <Button type="submit" disabled={loading}>
-            {loading ? (
+          <Button type="submit" disabled={loading || uploading}>
+            {loading || uploading ? (
               <>
                 <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                Submitting...
+                {uploading ? "Uploading receipt..." : "Submitting..."}
               </>
             ) : (
               <>
