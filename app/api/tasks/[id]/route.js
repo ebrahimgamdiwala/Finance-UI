@@ -176,18 +176,20 @@ export async function PATCH(req, context) {
     
     // Team members can ONLY update status and loggedHours, nothing else
     if (isTeamMember) {
-      if (status !== undefined) updateData.status = status;
-      if (loggedHours !== undefined) updateData.loggedHours = parseFloat(loggedHours);
+      // Check if trying to update restricted fields (must check if they exist in body)
+      const restrictedFields = ['title', 'description', 'assigneeId', 'priority', 'deadline', 'estimateHours', 'coverUrl', 'images', 'orderIndex'];
+      const hasRestrictedField = restrictedFields.some(field => body.hasOwnProperty(field));
       
-      // Reject if trying to update critical fields
-      if (title !== undefined || description !== undefined || assigneeId !== undefined || 
-          priority !== undefined || deadline !== undefined || estimateHours !== undefined ||
-          coverUrl !== undefined || images !== undefined) {
+      if (hasRestrictedField) {
         return NextResponse.json(
           { error: 'Team members can only update task status and logged hours' },
           { status: 403 }
         );
       }
+      
+      // Allow only status and loggedHours
+      if (status !== undefined) updateData.status = status;
+      if (loggedHours !== undefined) updateData.loggedHours = parseFloat(loggedHours);
     } else if (isAdmin || isProjectManager) {
       // Admins and project managers can update all fields
       if (title !== undefined) updateData.title = title;
