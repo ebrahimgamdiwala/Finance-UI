@@ -76,38 +76,41 @@ export default function DatabaseTablePage() {
     }
 
     try {
-      // Implement delete API call based on table
-      const endpoint = getDeleteEndpoint(tableName, id);
+      // Use the generic database API endpoint with proper table name mapping
+      const prismaTableName = getPrismaTableName(tableName);
+      const endpoint = `/api/database/${prismaTableName}/${id}`;
       const res = await fetch(endpoint, { method: 'DELETE' });
       
       if (res.ok) {
         alert('Record deleted successfully');
         fetchTableData();
       } else {
-        alert('Failed to delete record');
+        const errorData = await res.json();
+        alert(`Failed to delete record: ${errorData.error || 'Unknown error'}`);
       }
     } catch (error) {
       console.error('Error deleting record:', error);
-      alert('Error deleting record');
+      alert(`Error deleting record: ${error.message}`);
     }
   };
 
-  const getDeleteEndpoint = (table, id) => {
-    const endpoints = {
-      users: `/api/users/${id}`,
-      projects: `/api/projects/${id}`,
-      tasks: `/api/tasks/${id}`,
-      timesheets: `/api/timesheets/${id}`,
-      expenses: `/api/expenses/${id}`,
-      salesOrders: `/api/sales-orders/${id}`,
-      purchaseOrders: `/api/purchase-orders/${id}`,
-      invoices: `/api/invoices/${id}`,
-      vendorBills: `/api/vendor-bills/${id}`,
-      partners: `/api/partners/${id}`,
-      products: `/api/products/${id}`,
-      payments: `/api/payments/${id}`,
+  const getPrismaTableName = (table) => {
+    // Map frontend table names to Prisma model names
+    const tableMap = {
+      users: 'User',
+      projects: 'Project',
+      tasks: 'Task',
+      timesheets: 'Timesheet',
+      expenses: 'Expense',
+      salesOrders: 'SalesOrder',
+      purchaseOrders: 'PurchaseOrder',
+      invoices: 'CustomerInvoice',
+      vendorBills: 'VendorBill',
+      partners: 'Partner',
+      products: 'Product',
+      payments: 'Payment',
     };
-    return endpoints[table] || `/api/${table}/${id}`;
+    return tableMap[table] || table;
   };
 
   const getViewEndpoint = (table, id) => {

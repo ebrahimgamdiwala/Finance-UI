@@ -26,8 +26,10 @@ export async function PATCH(req, context) {
       "SalesOrder",
       "CustomerInvoice",
       "PurchaseOrder",
+      "VendorBill",
       "Partner",
       "Product",
+      "Payment",
     ];
 
     if (!allowedTables.includes(table)) {
@@ -101,8 +103,10 @@ export async function DELETE(req, context) {
       "SalesOrder",
       "CustomerInvoice",
       "PurchaseOrder",
+      "VendorBill",
       "Partner",
       "Product",
+      "Payment",
     ];
 
     if (!allowedTables.includes(table)) {
