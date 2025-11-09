@@ -43,20 +43,58 @@ const ProjectManagerDashboard = () => {
     if (!session) return;
     setLoading(true);
     try {
-      const [statsRes, projectsRes, soRes] = await Promise.all([
-        fetch("/api/user/profile?stats=true"),
-        fetch("/api/projects?limit=6"),
+      const [projectsRes, soRes, tasksRes] = await Promise.all([
+        fetch("/api/projects"),
         fetch("/api/sales-orders?status=pending_approval"),
+        fetch("/api/tasks"),
       ]);
 
-      if (statsRes.ok) {
-        const statsData = await statsRes.json();
-        setStats((prev) => ({ ...prev, ...statsData }));
-      }
       if (projectsRes.ok) {
         const projectsData = await projectsRes.json();
-        setProjects(projectsData);
+        setProjects(projectsData.slice(0, 6)); // Show first 6 projects
+        
+        // Calculate stats from projects
+        const totalProjects = projectsData.length;
+        const activeProjects = projectsData.filter(
+          p => p.status === 'IN_PROGRESS' || p.status === 'PLANNED'
+        ).length;
+        
+        // Calculate total tasks and delayed tasks from all projects
+        let totalTasks = 0;
+        let delayedTasks = 0;
+        const teamMembersSet = new Set();
+        
+        projectsData.forEach(project => {
+          totalTasks += project._count?.tasks || 0;
+          
+          // Count delayed tasks (deadline passed and not done)
+          if (project.tasks) {
+            const delayed = project.tasks.filter(task => 
+              task.deadline && 
+              new Date(task.deadline) < new Date() && 
+              task.status !== 'DONE'
+            ).length;
+            delayedTasks += delayed;
+          }
+          
+          // Collect unique team members
+          if (project.members) {
+            project.members.forEach(member => {
+              teamMembersSet.add(member.userId);
+            });
+          }
+        });
+        
+        setStats(prev => ({
+          ...prev,
+          totalProjects,
+          activeProjects,
+          totalTasks,
+          delayedTasks,
+          teamMembers: teamMembersSet.size,
+        }));
       }
+      
       if (soRes.ok) {
         const soData = await soRes.json();
         setPendingSalesOrders(soData);
