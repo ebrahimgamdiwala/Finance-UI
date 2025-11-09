@@ -107,6 +107,8 @@ export async function POST(req) {
       billable,
     } = body;
     
+    console.log('Timesheet create - billable value:', billable, 'type:', typeof billable);
+    
     // Validate required fields
     if (!taskId || !date || !hours) {
       return NextResponse.json(
@@ -157,13 +159,26 @@ export async function POST(req) {
       }
     }
     
+    // Convert billable to boolean properly
+    let isBillableValue = true; // Default to billable
+    if (billable !== undefined && billable !== null) {
+      // Handle string "false" or "true"
+      if (typeof billable === 'string') {
+        isBillableValue = billable.toLowerCase() === 'true';
+      } else {
+        isBillableValue = Boolean(billable);
+      }
+    }
+    
+    console.log('Final isBillable value:', isBillableValue);
+    
     const timesheet = await prisma.timesheet.create({
       data: {
         userId: user.id,
         taskId,
         date: new Date(date),
         hours: parseFloat(hours),
-        billable: billable !== undefined ? billable : true,
+        isBillable: isBillableValue,
       },
       include: {
         user: {

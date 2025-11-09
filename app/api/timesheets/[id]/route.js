@@ -130,7 +130,7 @@ export async function PATCH(req, context) {
     const updateData = {};
     if (date !== undefined) updateData.date = new Date(date);
     if (hours !== undefined) updateData.hours = parseFloat(hours);
-    if (billable !== undefined) updateData.billable = billable;
+    if (billable !== undefined) updateData.isBillable = Boolean(billable);
     
     // If hours changed, update task logged hours
     if (hours !== undefined && hours !== existingTimesheet.hours) {

@@ -83,7 +83,7 @@ export default function TimesheetsPage() {
   const calculateStats = (data) => {
     const totalHours = data.reduce((sum, t) => sum + parseFloat(t.hours || 0), 0);
     const billableHours = data
-      .filter((t) => t.billable)
+      .filter((t) => t.isBillable)
       .reduce((sum, t) => sum + parseFloat(t.hours || 0), 0);
     const nonBillableHours = totalHours - billableHours;
 
@@ -111,7 +111,7 @@ export default function TimesheetsPage() {
 
     if (filterBillable !== "all") {
       filtered = filtered.filter((t) =>
-        filterBillable === "billable" ? t.billable : !t.billable
+        filterBillable === "billable" ? t.isBillable : !t.isBillable
       );
     }
 
@@ -317,12 +317,12 @@ export default function TimesheetsPage() {
                       <Badge
                         variant="outline"
                         className={
-                          timesheet.billable
+                          timesheet.isBillable
                             ? "bg-green-500/10 text-green-600 border-green-500/20"
                             : "bg-gray-500/10 text-gray-600 border-gray-500/20"
                         }
                       >
-                        {timesheet.billable ? "Billable" : "Non-billable"}
+                        {timesheet.isBillable ? "Billable" : "Non-billable"}
                       </Badge>
                     </div>
                     <p className="text-xs text-muted-foreground">
